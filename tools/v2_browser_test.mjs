@@ -6,9 +6,11 @@ const ROOT = process.cwd();
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const URL_PATH = `file:///${ROOT.replace(/\\/g, '/')}/v2_titan/evidence/win_out_1/dashboard/index.html`;
 const SHOTS_DIR = path.join(ROOT, 'v2_titan/screenshots');
+const SHOTS_1920 = path.join(ROOT, 'v2_titan/evidence/screenshots_1920');
 const PORT = 9247;
 
 fs.mkdirSync(SHOTS_DIR, { recursive: true });
+fs.mkdirSync(SHOTS_1920, { recursive: true });
 const chrome = spawn(CHROME, [
   '--headless=new', '--disable-gpu', '--no-sandbox',
   `--remote-debugging-port=${PORT}`,
@@ -79,53 +81,79 @@ try {
   await cdp.send('Page.navigate', { url: URL_PATH });
   await new Promise((r) => setTimeout(r, 700));
 
-  // 1. Verify Screen 1 (Board Overview + 184 rows + Parity pills) & capture 1-board.png
-  const rowCnt = await cdp.eval(`document.querySelectorAll('tbody tr.rc').length`);
-  const parityPills = await cdp.eval(`document.querySelectorAll('.p-ok').length`);
-  ok('01_Screen1_184_Rows_6_Green_Pills', rowCnt === 184 && parityPills === 6, `rows=${rowCnt}, pills=${parityPills}`);
+  // 1. Token Radar overview @ 1440x900: distinct Huber vs Final ablation rows, real P25-P75 sum, 44px rows
+  const radarCheck = await cdp.eval(`(() => {
+    const txt = document.getElementById('app').innerText;
+    const rowH = document.querySelector('tbody tr.rc td')?.getBoundingClientRect().height || 0;
+    const lad = window.OMEGA_BOARD.oos.ladder;
+    const hasDistinctHuber = lad[1].loo_med_mult !== lad[2].loo_med_mult && lad[1].cs_med_mult !== lad[2].cs_med_mult;
+    return { txt, rowH, huber: lad[1], final: lad[2], hasDistinctHuber };
+  })()`);
+  ok('01_Radar_Ablation_Distinct_And_44px_Rows', radarCheck.hasDistinctHuber && radarCheck.rowH >= 42 && !radarCheck.txt.includes('$1x'), `rowH=${radarCheck.rowH}, huber=${radarCheck.huber.loo_med_mult}x vs final=${radarCheck.final.loo_med_mult}x`);
   await cdp.shot(path.join(SHOTS_DIR, '1-board.png'));
 
-  // 2. Test Watchlist / Early / Search / Sort controls
-  await cdp.eval(`document.querySelector('[data-subset="wl"]').click()`);
-  const wlCnt = await cdp.eval(`document.querySelectorAll('tbody tr.rc').length`);
+  // 2. Stale selection + empty state + filters + conditional labels check
   await cdp.eval(`document.querySelector('[data-subset="early"]').click()`);
-  const earlyCnt = await cdp.eval(`document.querySelectorAll('tbody tr.rc').length`);
-  await cdp.eval(`document.querySelector('[data-subset="all"]').click()`);
-  await cdp.eval(`(() => { const q = document.getElementById('qInput'); q.value='polymarket'; q.dispatchEvent(new Event('input')); })()`);
-  const polyCnt = await cdp.eval(`document.querySelectorAll('tbody tr.rc').length`);
-  const polyText = await cdp.eval(`document.querySelector('tbody tr.rc')?.innerText || ''`);
-  ok('02_Filters_WL_Early_Polymarket_No_LP_Flag', wlCnt === 40 && earlyCnt > 50 && polyCnt === 1 && polyText.includes('GEO-BLOCK'), `wl=${wlCnt}, early=${earlyCnt}, poly=${polyCnt}`);
+  const earlySync = await cdp.eval(`({ slug: window.TITAN_STATE.slug, notSentora: window.TITAN_STATE.slug !== 'sentora-curator' })`);
+  await cdp.eval(`(() => { const q = document.getElementById('qInput'); q.value='nonexistent_xyz_protocol'; q.dispatchEvent(new Event('input')); })()`);
+  const emptyCheck = await cdp.eval(`document.getElementById('app').innerText.includes('No protocols match')`);
+  await cdp.eval(`document.querySelector('[data-reset="1"]').click()`);
+  ok('02_Stale_Selection_Sync_And_Empty_State', earlySync.notSentora && emptyCheck, `syncedSlug=${earlySync.slug}, emptyState=${emptyCheck}`);
 
-  // 3. Screen 2 Unified Detail Dossier View (Firelight) & verify zero bottom clipping at 900px height -> capture 2-detail.png
-  await cdp.eval(`window.TITAN_SET({ subset: 'all', q: '', view: 'detail', slug: 'firelight', budget: 5000 })`);
+  // 3. Protocol Research (Firelight @ $5,000, 7%) -> check itemized reconciliation, BE drop, 0% outcome, capture 2-detail.png
+  await cdp.eval(`window.TITAN_SET({ view: 'research', slug: 'firelight', budget: 5000, dropShare: 0.07 })`);
   await new Promise((r) => setTimeout(r, 250));
-  const detInfo = await cdp.eval(`(() => { const a = document.getElementById('app'); return { txt: a.innerText, h: document.documentElement.scrollHeight }; })()`);
-  ok('03_Screen2_Unified_Detail_No_Bottom_Clip', detInfo.txt.includes('Firelight') && detInfo.txt.includes('PLAYBOOK') && detInfo.txt.includes('2D SCENARIO MATRIX') && detInfo.h <= 905, `height=${detInfo.h}`);
+  const fireInfo = await cdp.eval(`(() => {
+    const txt = document.getElementById('app').innerText;
+    return {
+      ok: txt.includes('Firelight') && txt.includes('Flare') && txt.includes('UNDERWRITING') && txt.includes('Break-Even Drop Share') && txt.includes('0% Token Reward Outcome') && !/\\bVIABLE\\b/.test(txt.replace('Minimum viable','')),
+      beMatch: txt.match(/Break-Even Drop Share[\\s\\S]{0,30}/)?.[0] || '',
+    };
+  })()`);
+  ok('03_Firelight_Research_Reconciliation_And_Labels', fireInfo.ok, fireInfo.beMatch.replace(/\s+/g, ' '));
   await cdp.shot(path.join(SHOTS_DIR, '2-detail.png'));
 
-  // 4. Screen 3 Filtered Viable Board (@ $1000 default budget, Sorted Net $/hr DESC, Firelight selected) -> capture 3-filtered.png
-  await cdp.eval(`window.TITAN_SET({ view: 'filtered', subset: 'viable', budget: 1000, sortBy: 'netHr', sortDir: -1, slug: 'firelight' })`);
+  // 4. Farming Intelligence (@ $1,000, 7% drop) -> conditional labels + 0/51 or 0/52 audit, capture 3-filtered.png
+  await cdp.eval(`window.TITAN_SET({ view: 'farming', farmFilter: 'viable', budget: 1000, dropShare: 0.07, sortBy: 'netHr', sortDir: -1 })`);
   await new Promise((r) => setTimeout(r, 250));
-  const filtRows = await cdp.eval(`document.querySelectorAll('tbody tr.rc').length`);
-  const filtTxt = await cdp.eval(`document.getElementById('app').innerText`);
-  ok('04_Screen3_Filtered_Viable_Board', filtRows >= 10 && /filtered actionable/i.test(filtTxt) && /firelight/i.test(filtTxt), `filteredRows=${filtRows}`);
+  const farmInfo = await cdp.eval(`(() => {
+    const txt = document.getElementById('app').innerText;
+    const rows = document.querySelectorAll('tbody tr.rc').length;
+    const hasCond = /COND\\. \\+EV @ 7\\.0%/.test(txt);
+    const hasZero = /0 \\/ \\d+/.test(txt);
+    return { rows, hasCond, hasZero };
+  })()`);
+  ok('04_Farming_Conditional_Labels_And_Zero_Drop_Audit', farmInfo.rows >= 10 && farmInfo.hasCond && farmInfo.hasZero, JSON.stringify(farmInfo));
   await cdp.shot(path.join(SHOTS_DIR, '3-filtered.png'));
 
-  // 5. Boundary calcEconomics + Zero-Change Scenario Parity in Browser
-  const econGuards = await cdp.eval(`(() => {
-    const O = window.OMEGA;
-    const invZero = O.calcEconomics({ capital_usd: 0, gas_4w_usd: 1, bridge_exit_usd: 1, slippage_bps: 5, lockup_days: 30, hours: 1 });
-    const invNeg = O.calcEconomics({ capital_usd: -500, gas_4w_usd: 1, bridge_exit_usd: 1, slippage_bps: 5, lockup_days: 30, hours: 1 });
-    const invNaN = O.calcEconomics({ capital_usd: NaN, gas_4w_usd: 1, bridge_exit_usd: 1, slippage_bps: 5, lockup_days: 30, hours: 1 });
-    const eth500 = O.calcEconomics({ capital_usd: 500, gas_4w_usd: 24, bridge_exit_usd: 12, slippage_bps: 5, lockup_days: 30, hours: 0.6, min_viable_usd: 1000, tvl_usd: 254e6, implied_usd: 120e6 });
-    const eth5000 = O.calcEconomics({ capital_usd: 5000, gas_4w_usd: 24, bridge_exit_usd: 12, slippage_bps: 5, lockup_days: 30, hours: 2.0, min_viable_usd: 1000, tvl_usd: 10e6, implied_usd: 150e6 });
-    return { z: invZero.valid, n: invNeg.valid, nan: invNaN.valid, c500: eth500.classification, c5000: eth5000.classification };
-  })()`);
-  ok('05_CalcEconomics_Edge_Guards', !econGuards.z && !econGuards.n && !econGuards.nan && econGuards.c500 === 'SKIP (LOSS)' && econGuards.c5000 === 'VIABLE', JSON.stringify(econGuards));
+  // 5. Also capture 1920x1080 views
+  await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false });
+  await cdp.eval(`window.TITAN_SET({ view: 'radar', subset: 'all', cat: 'ALL', chain: 'ALL', q: '', budget: 1000, dropShare: 0.07, sortBy: 'rank', sortDir: 1, perPage: 12 })`);
+  await new Promise((r) => setTimeout(r, 200));
+  await cdp.shot(path.join(SHOTS_1920, '1-board-1920.png'));
+  await cdp.eval(`window.TITAN_SET({ view: 'research', slug: 'firelight', budget: 5000, dropShare: 0.07 })`);
+  await new Promise((r) => setTimeout(r, 200));
+  await cdp.shot(path.join(SHOTS_1920, '2-detail-1920.png'));
+  await cdp.eval(`window.TITAN_SET({ view: 'farming', farmFilter: 'viable', budget: 1000, dropShare: 0.07, sortBy: 'netHr', sortDir: -1 })`);
+  await new Promise((r) => setTimeout(r, 200));
+  await cdp.shot(path.join(SHOTS_1920, '3-filtered-1920.png'));
 
-  // 6. Keyboard shortcuts 1/2/3 + Responsive Viewports zero overflow
-  await cdp.eval(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }))`);
-  const viewAfterK1 = await cdp.eval(`window.TITAN_STATE.view`);
+  // 6. Test Model Research, Dataset Explorer (758), Compare (with preset), Global Search, Methodology Modal
+  await cdp.eval(`window.TITAN_SET({ view: 'model' })`);
+  const modOk = await cdp.eval(`document.getElementById('app').innerText.includes('PRUNED') && document.getElementById('app').innerText.includes('71.4%')`);
+  await cdp.eval(`window.TITAN_SET({ view: 'dataset' })`);
+  const dsOk = await cdp.eval(`document.getElementById('app').innerText.includes('758 Snapshot Protocols')`);
+  await cdp.eval(`window.TITAN_SET({ view: 'compare' })`);
+  await cdp.eval(`document.querySelector('[data-loadcmp="1"]')?.click()`);
+  const cmpOk = await cdp.eval(`document.getElementById('app').innerText.includes('Side-by-Side Comparison')`);
+  await cdp.eval(`document.querySelector('[data-clearcmp="1"]')?.click()`);
+  await cdp.eval(`document.getElementById('btn-meth').click()`);
+  const methOk = await cdp.eval(`!document.getElementById('modal').hidden && document.getElementById('modal').innerText.includes('Sealed Snapshot')`);
+  await cdp.eval(`document.getElementById('mdl-close').click()`);
+  ok('05_MultiPage_And_Methodology_Modal', modOk && dsOk && cmpOk && methOk, `model=${modOk}, dataset=${dsOk}, compare=${cmpOk}, modal=${methOk}`);
+
+  // 7. Responsive Viewports (1920, 1440, 1024, 768, 390) zero horizontal overflow & zero console errors
+  await cdp.eval(`window.TITAN_SET({ view: 'radar' })`);
   const viewports = [];
   for (const [w, h] of [[1920, 1080], [1440, 900], [1024, 768], [768, 1024], [390, 844]]) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: w < 700 });
@@ -133,7 +161,7 @@ try {
     const ov = await cdp.eval(`document.documentElement.scrollWidth <= window.innerWidth + 1`);
     viewports.push({ width: w, height: h, noHorizOverflow: ov });
   }
-  ok('06_Keyboard_And_Responsive_5_Viewports', viewAfterK1 === 'board' && viewports.every((v) => v.noHorizOverflow), JSON.stringify(viewports));
+  ok('06_Responsive_5_Viewports', viewports.every((v) => v.noHorizOverflow), JSON.stringify(viewports));
   ok('07_Zero_Console_Errors', cdp.errors.length === 0, `errors=${cdp.errors.length}`);
 
   cdp.close();

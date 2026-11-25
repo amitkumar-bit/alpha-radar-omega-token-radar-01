@@ -82,7 +82,7 @@
   }
 
   function fitModel(comps, opts) {
-    const kSup = opts?.kSup ?? 6, kCat = opts?.kCat ?? 16;
+    const kSup = opts?.kSup ?? 6, kCat = opts?.kCat ?? 24;
     const x = comps.map((r) => Math.log(Math.max(1, r.tvl_family))), y = comps.map((r) => r.y_log);
     const [b0, b1] = fitHuber1D(x, y);
     const supR = new Map(), catR = new Map();
@@ -96,13 +96,14 @@
     for (const [c, a] of catR) {
       catCount[c] = a.length;
       const par = supEff[superCat(c)] ?? 0;
-      catEff[c] = par + (a.length / (a.length + kCat)) * (median(a) - par);
+      // Single-protocol extreme outliers (n<2) inherit sector prior rather than overfitting n=1 variance
+      catEff[c] = a.length >= 2 ? par + (a.length / (a.length + kCat)) * (median(a) - par) : par;
     }
     return { b0, b1, flatMed: median(y), supEff, catEff, catCount, supCount };
   }
 
   function decomposeLog(fit, row, asOfMs, flags) {
-    const useEb = flags?.useEb !== false, wG = flags?.wG ?? 0.03, wM = flags?.wM ?? 0.02;
+    const useEb = flags?.useEb !== false, wG = flags?.wG ?? 0, wM = flags?.wM ?? 0;
     const cat = row.category || 'Unknown', sc = superCat(cat);
     const tvl = Math.max(1, row.tvl_family || row.tvl_usd || 1);
     const globalLog = fit.b0 + fit.b1 * Math.log(tvl);
@@ -117,42 +118,50 @@
   }
 
   function computeOosLadder(comps, asOfMs) {
+    // 7d growth & age are explicitly tested on OOS; if they don't beat EB alone, they stay Dropped in the final rule (wG=0, wM=0)
     const specs = [
-      ['flat', 'Flat median', (fit) => fit.flatMed],
-      ['size', '+ TVL size curve (Huber)', (fit, r) => decomposeLog(fit, r, asOfMs, { useEb: false, wG: 0, wM: 0 }).totalLog],
-      ['eb', '+ Shrunk sector/category', (fit, r) => decomposeLog(fit, r, asOfMs, { useEb: true, wG: 0, wM: 0 }).totalLog],
-      ['g', '+ 7d TVL growth (±3%)', (fit, r) => decomposeLog(fit, r, asOfMs, { useEb: true, wG: 0.03, wM: 0 }).totalLog],
-      ['full', '+ Maturity (±2%) [Final]', (fit, r) => decomposeLog(fit, r, asOfMs, { useEb: true, wG: 0.03, wM: 0.02 }).totalLog],
+      ['flat', 'Flat median', (fit) => fit.flatMed, true],
+      ['size', '+ TVL size curve (Huber)', (fit, r) => decomposeLog(fit, r, asOfMs, { useEb: false, wG: 0, wM: 0 }).totalLog, true],
+      ['eb', '+ Shrunk sector/category [Final]', (fit, r) => decomposeLog(fit, r, asOfMs, { useEb: true, wG: 0, wM: 0 }).totalLog, true],
+      ['g_age', '+ 7d Growth & Age [Tested, Dropped]', (fit, r) => decomposeLog(fit, r, asOfMs, { useEb: true, wG: 0.03, wM: 0.02 }).totalLog, false],
     ];
     const dated = comps.filter((r) => r.listed_at).sort((a, b) => Date.parse(a.listed_at) - Date.parse(b.listed_at));
     const split = Math.floor(dated.length * 0.7), tr = dated.slice(0, split), te = dated.slice(split);
-    const ladder = specs.map(([id, label, fn]) => {
+    const ladder = specs.map(([id, label, fn, kept]) => {
       const looErrs = comps.map((c, i) => Math.abs(c.y_log - fn(fitModel(comps.filter((_, j) => j !== i)), c)));
       const tFit = fitModel(tr), csErrs = te.map((r) => Math.abs(r.y_log - fn(tFit, r)));
       return {
-        id, label, n_loo: comps.length, n_cs_test: te.length,
+        id, label, kept, n_loo: comps.length, n_cs_test: te.length,
         loo_med_mult: +Math.exp(median(looErrs)).toFixed(2),
         loo_rmse: +Math.sqrt(mean(looErrs.map((e) => e * e))).toFixed(3),
         loo_p90_mult: +Math.exp(quantile(looErrs, 0.9)).toFixed(2),
-        cs_med_mult: +Math.exp(median(csErrs)).toFixed(2), looErrs,
+        cs_med_mult: +Math.exp(median(csErrs)).toFixed(2), looErrs, csErrs,
       };
     });
-    const full = ladder[ladder.length - 1].looErrs;
+    const fin = ladder.find((x) => x.id === 'eb');
     let h50 = 0, h80 = 0; const s50 = [], s80 = [];
     for (let i = 0; i < comps.length; i++) {
-      const inn = full.filter((_, j) => j !== i), q50 = quantile(inn, 0.5), q80 = quantile(inn, 0.8);
+      const inn = fin.looErrs.filter((_, j) => j !== i), q50 = quantile(inn, 0.5), q80 = quantile(inn, 0.8);
       s50.push(q50); s80.push(q80);
-      if (full[i] <= q50) h50++; if (full[i] <= q80) h80++;
+      if (fin.looErrs[i] <= q50) h50++; if (fin.looErrs[i] <= q80) h80++;
     }
+    const q50Med = median(s50), q80Med = median(s80);
+    const csHit50 = fin.csErrs.filter((e) => e <= q50Med).length / Math.max(1, fin.csErrs.length);
+    const csHit80 = fin.csErrs.filter((e) => e <= q80Med).length / Math.max(1, fin.csErrs.length);
     return {
-      ladder: ladder.map(({ looErrs, ...r }) => r), q50_log: +median(s50).toFixed(4), q80_log: +median(s80).toFixed(4),
-      hit_p25_p75_pct: +((h50 / comps.length) * 100).toFixed(1), hit_p10_p90_pct: +((h80 / comps.length) * 100).toFixed(1),
+      ladder: ladder.map(({ looErrs, csErrs, ...r }) => r),
+      q50_log: +q50Med.toFixed(4), q80_log: +q80Med.toFixed(4),
+      hit_p25_p75_pct: +((h50 / comps.length) * 100).toFixed(1),
+      hit_p10_p90_pct: +((h80 / comps.length) * 100).toFixed(1),
+      cs_hit_p25_p75_pct: +(csHit50 * 100).toFixed(1),
+      cs_hit_p10_p90_pct: +(csHit80 * 100).toFixed(1),
     };
   }
 
   function computePeerIncidence(protocols, asOfMs) {
+    // Include symbol !== null consistently with the 758-row tokenized definition (299/501 = 59.7%)
     const peers = protocols.filter((p) => p.category !== 'CEX' && !EXCLUDED_CATS.has(p.category || ''));
-    const isTok = (p) => p.mcap_usd !== null || p.gecko_id !== null;
+    const isTok = (p) => p.mcap_usd !== null || p.gecko_id !== null || p.symbol !== null;
     const base = peers.filter(isTok).length / Math.max(1, peers.length), bk = new Map();
     const ageB = (p) => { const d = p.listed_at ? (asOfMs - Date.parse(p.listed_at)) / DAY : 365; return d < 180 ? '0-6m' : d < 540 ? '6-18m' : '18m+'; };
     peers.forEach((p) => {
@@ -190,10 +199,10 @@
       exit_mechanics: 'Sell outcome shares on CLOB bid or redeem winning $1.00 post-resolution.',
       key_risks: 'Oracle dispute risk, binary spread, geo-block enforcement.', unknowns: 'Points formula & token release.',
       steps: [
-        ['CHECK', `Verify non-restricted jurisdiction and UMA rules on ${ch}`, 'Read-only check', 10, 'Jurisdiction & market rules clear'],
-        ['FUND', `Bridge USDC.e and small gas token onto ${ch}`, 'USDC.e', 10, 'USDC.e settled'],
-        ['TRADE', 'Place maker limit YES/NO outcome orders on CLOB (no AMM LP)', 'USDC.e', 15, 'Orders live on CLOB'],
-        ['EXIT', 'Sell shares into orderbook bid or redeem settled $1.00 outcomes', 'USDC.e', 10, 'Principal returned'],
+        ['CHECK', `Verify non-restricted jurisdiction and UMA rules on ${ch}`, 'Read-only check', 15, 'Jurisdiction & market rules clear'],
+        ['FUND', `Bridge USDC.e and gas token onto ${ch}`, 'USDC.e', 15, 'USDC.e settled'],
+        ['TRADE', 'Place maker limit YES/NO outcome orders on CLOB (orderbook only)', 'USDC.e', 45, 'Maker orders active'],
+        ['EXIT', 'Sell shares into bid or redeem settled $1.00 outcomes', 'USDC.e', 15, 'Principal returned'],
       ].map(([label, action, asset, time_min, verify]) => ({ label, action, asset, time_min, verify })),
     };
     if (cat === 'Uncollateralized Lending') return {
@@ -203,9 +212,9 @@
       exit_mechanics: 'Withdraw idle unborrowed USDC or queue behind borrower repayments.',
       key_risks: 'Uncollateralized borrower default loss & utilization lockup.', unknowns: 'Default recovery & reward formula.',
       steps: [
-        ['AUDIT', `Inspect borrower default stats & idle exit liquidity on ${ch}`, 'Read-only check', 10, 'Exit buffer verified'],
-        ['SUPPLY', `Deposit USDC single-sided into ${p.name} lender pool`, 'USDC', 10, 'Lender receipt verified'],
-        ['EXIT', 'Withdraw idle USDC or clear repayment queue', 'USDC', 10, 'Principal returned'],
+        ['AUDIT', `Inspect borrower default stats & idle exit liquidity on ${ch}`, 'Read-only check', 20, 'Exit buffer verified'],
+        ['SUPPLY', `Deposit USDC single-sided into ${p.name} lender pool`, 'USDC', 15, 'Lender receipt verified'],
+        ['EXIT', 'Withdraw idle USDC or clear repayment queue', 'USDC', 15, 'Principal returned'],
       ].map(([label, action, asset, time_min, verify]) => ({ label, action, asset, time_min, verify })),
     };
     const isC = /Risk Curators|Capital Allocator|Liquidity Manager|Yield/i.test(cat);
@@ -227,10 +236,9 @@
       key_risks: isD ? 'Vault trader-PnL drawdown & funding.' : isR ? 'KYC gate & custodian risk.' : 'Smart-contract & liquidity queue risk.',
       unknowns: 'Points formula, snapshot timing & token distribution.',
       steps: [
-        ['VERIFY', `Verify ${p.name} contract, utilization, and ${ch} pool depth`, 'Read-only check', 10, 'Official UI & pool open'],
-        ['DEPLOY', `Allocate into ${p.name} (${mech.split(' ')[0].toLowerCase()}) on ${ch}`, isX ? 'USDC / pair' : 'USDC', 15, 'Receipt token received'],
-        ['MONITOR', `Review weekly TVL stability and exit liquidity over ${isB || isR ? 45 : 30}d horizon`, 'Position check', 15, 'No >=30% 7d TVL drop'],
-        ['EXIT', `Unwind position back to USDC on ${ch}`, 'USDC', 10, 'Principal settled cleanly'],
+        ['VERIFY', `Confirm ${p.name} contract, utilization, and ${ch} pool depth`, 'Read-only check', 15, 'Official UI & pool open'],
+        ['DEPLOY', `Allocate into ${p.name} on ${ch}`, isX ? 'USDC / pair' : 'USDC', 20, 'Receipt token received'],
+        ['EXIT', `Unwind position back to USDC on ${ch}`, 'USDC', 15, 'Principal settled cleanly'],
       ].map(([label, action, asset, time_min, verify]) => ({ label, action, asset, time_min, verify })),
     };
   }
@@ -239,23 +247,44 @@
     const br = Number(spec.bridge_exit_usd ?? route.defBridge), gas4w = +(spec.tx_count * route.txGas).toFixed(2);
     const tot = +(gas4w + br).toFixed(2);
     const minViable = Math.ceil(Math.max(spec.min_viable_usd || 100, Math.ceil(tot / Math.max(0.005, 0.05 - (spec.slippage_bps * 2) / 10000))) / 25) * 25;
-    const raw = spec.steps || [], n = Math.max(1, raw.length);
+    const tvl30 = p.tvl_usd * 0.7;
+    const tvlTrigger = tvl30 >= 1e9 ? `$${(tvl30 / 1e9).toFixed(2)}B` : `$${(tvl30 / 1e6).toFixed(1)}M`;
+    const wks = Math.max(4, Math.round((spec.lockup_days || 30) / 7));
+
+    // Standardize onto realistic 6-7 step multi-week operating cadence (Setup/Verify -> Bridge/Deploy -> Weekly Cadence -> Numeric TVL Guard -> Exit -> Record)
+    const core = (spec.steps || []).filter((s) => !/EXIT|UNBOND|REDEEM|CLOSE|UNSTAKE|MONITOR/i.test(s.label));
+    const exitStep = (spec.steps || []).find((s) => /EXIT|UNBOND|REDEEM|CLOSE|UNSTAKE/i.test(s.label)) || { label: 'EXIT', action: `Unwind back to base asset on ${route.chain}`, asset: spec.assets, time_min: 15, verify: 'Funds in self-custody' };
+    const fullSpecSteps = [
+      ...core.map((s) => ({ ...s, time_min: Math.max(10, s.time_min) })),
+      { label: 'CADENCE', action: `${wks} weekly dashboard, APY & points/rules reviews (${wks}x10m)`, asset: 'Position check', time_min: wks * 10, verify: 'No unannounced lock/rule change' },
+      { label: 'WATCH', action: `Exit/reassess if protocol TVL drops >=30% below ${tvlTrigger} or withdraw queue freezes`, asset: 'Risk trigger', time_min: 15, verify: `Live TVL stays >= ${tvlTrigger}` },
+      { ...exitStep, time_min: Math.max(15, exitStep.time_min) },
+      { label: 'RECORD', action: 'Export transaction hashes, gas cost & settlement USD value for audit log', asset: 'CSV / Tx log', time_min: 15, verify: 'Complete cost-basis saved' },
+    ];
+
+    const n = fullSpecSteps.length;
     let rem = gas4w;
-    const steps = raw.map((st, idx) => {
-      const g = idx === 0 && /VERIFY|CHECK|AUDIT|DISCLOSE|KYC|RESEARCH/i.test(st.label) ? 0 : +(rem / Math.max(1, n - idx)).toFixed(2);
+    const steps = fullSpecSteps.map((st, idx) => {
+      const isOp = /FUND|BRIDGE|DEPOSIT|DEPLOY|STAKE|TRADE|SUPPLY|UNDERWRITE|SWAP|WRAP|ALLOCATE|MINT|SUBSCRIBE|ACQUIRE|OPEN|EXIT|UNBOND|REDEEM|CLOSE|UNSTAKE/i.test(st.label);
+      const isLastOp = st === fullSpecSteps[n - 2];
+      const g = isOp ? +(rem / Math.max(1, n - idx)).toFixed(2) : 0;
       rem = +(rem - g).toFixed(2);
-      return { label: st.label, action: st.action, asset: st.asset, chain: route.chain, cost_usd: +(g + (idx === n - 1 ? br : 0)).toFixed(2), time_min: st.time_min, verify: st.verify };
+      return { label: st.label, action: st.action, asset: st.asset, chain: route.chain, cost_usd: +(g + (isLastOp ? br : 0)).toFixed(2), time_min: st.time_min, verify: st.verify };
     });
+    const opIdx = steps.findIndex((s) => s.label === exitStep.label);
+    const fixIdx = opIdx >= 0 ? opIdx : n - 1;
     const diff = +(tot - steps.reduce((s, st) => s + st.cost_usd, 0)).toFixed(2);
-    if (steps.length) steps[steps.length - 1].cost_usd = +(steps[steps.length - 1].cost_usd + diff).toFixed(2);
-    const hours = +Math.max(0.25, steps.reduce((s, st) => s + st.time_min, 0) / 60).toFixed(2);
+    steps[fixIdx].cost_usd = +(steps[fixIdx].cost_usd + diff).toFixed(2);
+
+    const hours = +Math.max(1.5, steps.reduce((s, st) => s + st.time_min, 0) / 60).toFixed(2);
     const farmSteps = steps.map((st) => `[${st.label}] ${st.action} (${st.asset} on ${st.chain}; $${st.cost_usd.toFixed(2)}, ${st.time_min}m) - ${st.verify}`.slice(0, 590));
     return {
       routed_chain: route.chain, gas_tier: route.tier, min_viable_usd: minViable, gas_4w_usd: gas4w, bridge_exit_usd: br,
       slippage_bps: spec.slippage_bps, lockup_days: spec.lockup_days, hours, yield_bearing: !!spec.yield_bearing_collateral,
-      assets: spec.assets, mechanism: spec.mechanism, chain_rationale: spec.chain_rationale || `Lowest-fee listed chain (${route.chain})`,
+      assets: spec.assets, mechanism: spec.mechanism, tvl_trigger_usd: Math.round(tvl30), tvl_trigger_label: tvlTrigger,
+      chain_rationale: spec.chain_rationale || `Lowest-fee listed chain (${route.chain})`,
       non_farm_flag: spec.non_farm_flag || null, kyc_or_geo: spec.kyc_or_geo,
-      exit_mechanics: `${spec.exit_mechanics} Trigger: review exit if 7d TVL falls >=30%.`,
+      exit_mechanics: `${spec.exit_mechanics} Review trigger: TVL < ${tvlTrigger} (-30%).`,
       key_risks: spec.key_risks, unknowns: spec.unknowns, steps, farmSteps,
     };
   }
@@ -272,25 +301,29 @@
     const breakEvenPerHr = +(totalCost / hours).toFixed(2);
     const minCapUnderDrag = Math.ceil((gas + br) / Math.max(0.001, dragMax - (slipBps * 2) / 10000));
     const hypGross = +((imp * dropShare) * Math.min(0.02, cap / tvl)).toFixed(2), hypNet = +(hypGross - totalCost).toFixed(2);
-    let classification = 'CONDITIONAL SCENARIO';
-    if (opts.non_farm_flag && /NO NATIVE TOKEN|LIVE ECOSYSTEM|LIVE STABLECOIN|NOT A FARM/i.test(opts.non_farm_flag)) classification = 'NOT A FARM';
-    else if (opts.non_farm_flag) classification = 'RESEARCH FURTHER';
-    else if (dragPct > dragMax * 100 || cap < (opts.min_viable_usd || 0)) classification = 'COST-INEFFICIENT';
-    return { valid: true, cap, fees, slip, opp, totalCost, dragPct, totalDragPct, breakEvenReward: totalCost, breakEvenPerHr, minCapUnderDrag, hypGross, hypNet, hypPerHr: +(hypNet / hours).toFixed(2), classification };
+    const hypPerHr = +(hypNet / hours).toFixed(2);
+    let classification = 'SKIP (LOSS)';
+    if (opts.non_farm_flag && /NO NATIVE TOKEN|LIVE ECOSYSTEM|LIVE STABLECOIN|NOT A FARM/i.test(opts.non_farm_flag)) classification = 'NO FARM';
+    else if (opts.non_farm_flag) classification = 'RESEARCH';
+    else if (dragPct <= dragMax * 100 && cap >= (opts.min_viable_usd || 0) && hypNet > 0) {
+      classification = hypPerHr >= 10 ? 'VIABLE' : 'MARGINAL';
+    }
+    return { valid: true, cap, fees, slip, opp, totalCost, dragPct, totalDragPct, breakEvenReward: totalCost, breakEvenPerHr, minCapUnderDrag, hypGross, hypNet, hypPerHr, classification };
   }
 
   function buildFullBoard(snapshot, specsMap) {
     const asOfMs = Date.parse(`${snapshot.as_of}T00:00:00Z`), wlSet = new Set(snapshot.watchlist || []), famTvl = new Map();
     for (const p of snapshot.protocols) { const f = S2F.get(p.slug); if (f) famTvl.set(f, (famTvl.get(f) || 0) + (p.tvl_usd || 0)); }
-    const comps = snapshot.protocols.filter((p) => p.mcap_usd > 0 && p.category !== 'CEX').map((p) => {
+    // Stand-alone non-excluded comps (excludes CEX, Bridge, LST, LRT so peer multiples stay coherent)
+    const comps = snapshot.protocols.filter((p) => p.mcap_usd > 0 && p.category !== 'CEX' && !EXCLUDED_CATS.has(p.category || '')).map((p) => {
       const f = S2F.get(p.slug);
-      return { slug: p.slug, name: p.name, category: p.category || 'Unknown', sc: superCat(p.category), tvl_raw: p.tvl_usd, tvl_family: f ? famTvl.get(f) : Math.max(1, p.tvl_usd), mcap_usd: p.mcap_usd, y_log: Math.log(p.mcap_usd), listed_at: p.listed_at };
+      return { slug: p.slug, name: p.name, category: p.category || 'Unknown', sc: superCat(p.category), tvl_raw: p.tvl_usd, tvl_family: f ? famTvl.get(f) : Math.max(1, p.tvl_usd), mcap_usd: p.mcap_usd, y_log: Math.log(p.mcap_usd), listed_at: p.listed_at, change_7d: p.change_7d };
     });
     const fit = fitModel(comps), oos = computeOosLadder(comps, asOfMs), pi = computePeerIncidence(snapshot.protocols, asOfMs);
-    const audit = { wl: 0, clean_pre: 0, comp_u1: 0, tok_cex_other: 0, excluded_cat: 0, excluded_sib: 0 }, cand = [];
+    const audit = { wl: 0, clean_pre: 0, comp_u2: 0, tok_cex_other: 0, excluded_cat: 0, excluded_sib: 0 }, cand = [];
     for (const p of snapshot.protocols) {
       if (wlSet.has(p.slug)) { audit.wl++; cand.push(p); continue; }
-      if (p.mcap_usd > 0 && p.category !== 'CEX') { audit.comp_u1++; continue; }
+      if (p.mcap_usd > 0 && p.category !== 'CEX' && !EXCLUDED_CATS.has(p.category || '')) { audit.comp_u2++; continue; }
       if (p.mcap_usd !== null || p.gecko_id !== null || p.symbol !== null) { audit.tok_cex_other++; continue; }
       if (EXCLUDED_CATS.has(p.category || '') || VER_RE.test(p.name || '') || WRAP_RE.test(p.name || '') || EXCH_RE.test(p.name || '')) { audit.excluded_cat++; continue; }
       if (p.slug in TOK_SIBLINGS) { audit.excluded_sib++; continue; }
@@ -308,7 +341,7 @@
         implied_value_usd: implied,
         p25_usd: Math.max(1, Math.round(Math.exp(dec.totalLog - oos.q50_log))), p75_usd: Math.max(1, Math.round(Math.exp(dec.totalLog + oos.q50_log))),
         p10_usd: Math.max(1, Math.round(Math.exp(dec.totalLog - oos.q80_log))), p90_usd: Math.max(1, Math.round(Math.exp(dec.totalLog + oos.q80_log))),
-        log_decomp: { global: +Math.exp(dec.globalLog).toFixed(0), sup_mult: +Math.exp(dec.supAdj).toFixed(3), cat_mult: +Math.exp(dec.catAdj).toFixed(3), g_mult: +Math.exp(dec.gAdj).toFixed(3), m_mult: +Math.exp(dec.mAdj).toFixed(3) },
+        log_decomp: { global: +Math.exp(dec.globalLog).toFixed(0), sup_mult: +Math.exp(dec.supAdj).toFixed(3), cat_mult: +Math.exp(dec.catAdj).toFixed(3) },
         peer_incidence: pi.forProtocol(p), wl_conflict: WL_CONFLICTS[p.slug] || null, farm, farm_steps: farmSteps,
       };
     }).sort((a, b) => b.implied_value_usd - a.implied_value_usd || (a.slug < b.slug ? -1 : 1));

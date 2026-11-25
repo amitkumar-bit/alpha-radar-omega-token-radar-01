@@ -498,10 +498,10 @@ export function buildRadar(snapshot: Snapshot): { board: BoardRow[]; radar: Rada
     return fam ? (famTvl.get(fam) ?? p.tvl_usd) : p.tvl_usd;
   };
 
-  // U1 Comparables (non-CEX live mcap > 0, tvl > 0)
-  const rawComps = snapshot.protocols.filter(
-    (p) => p.mcap_usd !== null && p.mcap_usd > 0 && p.tvl_usd > 0 && p.category !== 'CEX',
-  );
+  // U1 Comparables (non-CEX live mcap > 0, tvl > 0), sorted by slug for row-order invariance
+  const rawComps = snapshot.protocols
+    .filter((p) => p.mcap_usd !== null && p.mcap_usd > 0 && p.tvl_usd > 0 && p.category !== 'CEX')
+    .sort((a, b) => (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0));
   const trainComps = rawComps.map((p) => ({
     slug: p.slug,
     name: p.name,
@@ -556,7 +556,8 @@ export function buildRadar(snapshot: Snapshot): { board: BoardRow[]; radar: Rada
     .slice(0, EARLY_LIMIT);
   const earlySet = new Set(preTokenEarly.map((p) => p.slug));
   const wlProtocols = snapshot.protocols.filter((p) => wlSet.has(p.slug));
-  const boardInput = [...wlProtocols, ...preTokenEarly.filter((p) => !wlSet.has(p.slug))];
+  const boardInput = [...wlProtocols, ...preTokenEarly.filter((p) => !wlSet.has(p.slug))]
+    .sort((a, b) => (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0));
   const boardSet = new Set(boardInput.map((p) => p.slug));
 
   const auditRows: AuditRow[] = snapshot.protocols.map((p) => {

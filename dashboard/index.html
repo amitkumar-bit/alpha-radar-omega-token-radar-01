@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMEGA TITAN V2 — Pre-Token Protocol Radar</title>
+  <link rel="stylesheet" href="./app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <div>
+        <div class="brand-title">OMEGA TITAN <span class="badge badge-cyan">V2</span></div>
+        <div class="brand-sub" id="hdrSub">DefiLlama Snapshot · Offline Deterministic Build</div>
+      </div>
+    </div>
+    <nav class="nav-tabs" role="tablist" aria-label="Dashboard views">
+      <button class="nav-btn active" data-view="board" role="tab" aria-selected="true">1. Market Overview</button>
+      <button class="nav-btn" data-view="detail" role="tab" aria-selected="false">2. Research &amp; Valuation</button>
+      <button class="nav-btn" data-view="farm" role="tab" aria-selected="false">3. Farming &amp; Scenarios</button>
+    </nav>
+    <div class="hdr-right">
+      <label class="sr-only" for="quickPick">Quick switch protocol</label>
+      <select id="quickPick" class="ctl-sm"></select>
+    </div>
+  </header>
+
+  <main id="app" class="container"></main>
+
+  <script src="./engine.js"></script>
+  <script src="../data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

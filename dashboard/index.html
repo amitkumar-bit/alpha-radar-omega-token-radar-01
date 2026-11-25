@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ALPHA-RADAR-OMEGA — Pre-Token Research Terminal</title>
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+<header class="hdr" role="banner">
+  <div><h1>ALPHA-RADAR-OMEGA</h1><p id="meta" class="sub">Loading snapshot...</p></div>
+  <nav class="tabs" aria-label="Primary Views">
+    <button type="button" class="tab active" data-view="radar" aria-pressed="true">Radar</button>
+    <button type="button" class="tab" data-view="compare" aria-pressed="false">Compare (<span id="cmp-cnt">0</span>)</button>
+    <button type="button" class="tab" data-view="audit" aria-pressed="false">Dataset Audit (758)</button>
+    <button type="button" class="tab" data-view="integrity" aria-pressed="false">Integrity (<span id="int-cnt">-</span>)</button>
+  </nav>
+</header>
+<section id="kpis" class="kpis" aria-label="Summary Metrics"></section>
+<section id="view-radar" class="view active">
+  <div class="toolbar" role="region" aria-label="Filters">
+    <input id="q" type="search" placeholder="Search protocol, slug, category, chain..." aria-label="Search protocols" />
+    <select id="f-cat" aria-label="Filter by category"><option value="">All Categories</option></select>
+    <select id="f-chain" aria-label="Filter by chain"><option value="">All Chains</option></select>
+    <select id="f-ev" aria-label="Filter by evidence quality"><option value="">All Evidence</option><option value="Dense (>=3)">Dense (&gt;=3 comps)</option><option value="Sparse (1-2)">Sparse (1-2 comps)</option><option value="Zero-Comp (0)">Zero-Comp (0)</option></select>
+    <button type="button" id="btn-wl" class="btn" aria-pressed="false">Watchlist (40)</button>
+    <button type="button" id="btn-reset" class="btn">Reset</button>
+    <span id="row-cnt" class="mut ml-auto"></span>
+  </div>
+  <div class="split">
+    <div class="panel table-wrap">
+      <table><thead><tr>
+        <th><button type="button" class="srt on" data-k="rank">#</button></th>
+        <th><button type="button" class="srt" data-k="name">Protocol</button></th>
+        <th><button type="button" class="srt" data-k="category">Category</button></th>
+        <th><button type="button" class="srt" data-k="routed_chain">Chain (Tier)</button></th>
+        <th><button type="button" class="srt" data-k="tvl_usd">TVL</button></th>
+        <th><button type="button" class="srt" data-k="implied_value_usd">Implied (80% Band)</button></th>
+        <th><button type="button" class="srt" data-k="gas_4w_usd">4w Gas / Floor</button></th>
+        <th><button type="button" class="srt" data-k="rank_p10">Boot Rank</button></th>
+        <th>Cmp</th>
+      </tr></thead><tbody id="tbody"></tbody></table>
+    </div>
+    <aside id="detail" class="panel detail" aria-label="Protocol Intelligence Panel">
+      <div class="subtabs" role="tablist">
+        <button type="button" class="stab active" data-dtab="overview">Overview &amp; Farm</button>
+        <button type="button" class="stab" data-dtab="peers">Model &amp; Peers</button>
+        <button type="button" class="stab" data-dtab="sim">Scenario Sim</button>
+      </div>
+      <div id="detail-body"></div>
+    </aside>
+  </div>
+</section>
+<section id="view-compare" class="view" hidden><div class="panel pad"><div class="row-between"><h2>Side-by-Side Protocol Comparison (up to 4)</h2><button type="button" id="btn-cmp-clear" class="btn">Clear Comparison</button></div><div id="cmp-body" class="table-wrap"></div></div></section>
+<section id="view-audit" class="view" hidden><div class="panel pad"><h2>Complete 758-Protocol Dataset Accounting</h2><div id="audit-sum" class="audit-grid"></div><div class="toolbar"><input id="audit-q" type="search" placeholder="Filter audit rows by name, slug, status..." aria-label="Filter dataset audit" /><select id="audit-st" aria-label="Filter by audit status"><option value="">All Statuses</option></select></div><div class="table-wrap" style="max-height:460px"><table><thead><tr><th>Slug</th><th>Name</th><th>Category</th><th>TVL</th><th>Mcap</th><th>Status</th><th>Rationale</th></tr></thead><tbody id="audit-tb"></tbody></table></div></div></section>
+<section id="view-integrity" class="view" hidden><div class="panel pad"><h2>Live Executable Integrity &amp; Parity Checks</h2><p class="sub">Re-executed directly in browser runtime against loaded dataset.</p><div id="int-body"></div></div></section>
+<script src="../data.js"></script><script src="app.js"></script>
+</body>
+</html>

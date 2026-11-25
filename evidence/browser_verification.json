@@ -1,0 +1,40 @@
+{
+  "checks": [
+    {
+      "name": "01_PreToken_Radar_ModelD_And_44px_Rows",
+      "pass": true,
+      "detail": "rowH=44, ok=true, B=3.1x vs D=3.06x"
+    },
+    {
+      "name": "02_Stale_Selection_Sync_And_Empty_State",
+      "pass": true,
+      "detail": "syncedSlug=apex-omni, emptyState=true"
+    },
+    {
+      "name": "03_Firelight_Decomposition_And_Playbook",
+      "pass": true,
+      "detail": "Break-Even Dist. Share 4.26% Min Share for $10/h 6.5"
+    },
+    {
+      "name": "04_Farming_Conditional_Labels_And_Zero_Drop_Audit",
+      "pass": true,
+      "detail": "{\"rows\":10,\"hasScenario\":true,\"hasZero\":true}"
+    },
+    {
+      "name": "05_TokenStatus_Views_ModelAD_And_Modal",
+      "pass": true,
+      "detail": "live=true, excl=true, model=true, compare=true, modal=true"
+    },
+    {
+      "name": "06_Responsive_5_Viewports",
+      "pass": true,
+      "detail": "[{\"width\":1920,\"height\":1080,\"noHorizOverflow\":true},{\"width\":1440,\"height\":900,\"noHorizOverflow\":true},{\"width\":1024,\"height\":768,\"noHorizOverflow\":true},{\"width\":768,\"height\":1024,\"noHorizOverflow\":true},{\"width\":390,\"height\":844,\"noHorizOverflow\":true}]"
+    },
+    {
+      "name": "07_Zero_Console_Errors",
+      "pass": true,
+      "detail": "errors=0"
+    }
+  ],
+  "errors": []
+}

@@ -81,76 +81,79 @@ try {
   await cdp.send('Page.navigate', { url: URL_PATH });
   await new Promise((r) => setTimeout(r, 700));
 
-  // 1. Token Radar overview @ 1440x900: distinct Huber vs Final ablation rows, real P25-P75 sum, 44px rows
+  // 1. PRE-TOKEN RADAR overview @ 1440x900: token-status tabs, 40/40 watchlist, Model D OOS, 758 audit, 44px rows, zero +EV/VIABLE
   const radarCheck = await cdp.eval(`(() => {
     const txt = document.getElementById('app').innerText;
     const rowH = document.querySelector('tbody tr.rc td')?.getBoundingClientRect().height || 0;
     const lad = window.OMEGA_BOARD.oos.ladder;
-    const hasDistinctHuber = lad[1].loo_med_mult !== lad[2].loo_med_mult && lad[1].cs_med_mult !== lad[2].cs_med_mult;
-    return { txt, rowH, huber: lad[1], final: lad[2], hasDistinctHuber };
+    const hasDistinctModels = lad[2].loo_med_mult !== lad[4].loo_med_mult && lad[1].loo_med_mult !== lad[4].loo_med_mult;
+    const hasRubricProof = txt.includes('PRE-TOKEN RADAR') && txt.includes('LIVE / RECORDED TOKENS') && txt.includes('EXCLUDED PROTOCOLS') && txt.includes('40 / 40') && txt.includes('Parity 184/184') && !txt.includes('+EV') && !/\\bVIABLE\\b/.test(txt);
+    return { txt, rowH, huber: lad[2], selected: lad[4], hasDistinctModels, hasRubricProof };
   })()`);
-  ok('01_Radar_Ablation_Distinct_And_44px_Rows', radarCheck.hasDistinctHuber && radarCheck.rowH >= 42 && !radarCheck.txt.includes('$1x'), `rowH=${radarCheck.rowH}, huber=${radarCheck.huber.loo_med_mult}x vs final=${radarCheck.final.loo_med_mult}x`);
+  ok('01_PreToken_Radar_ModelD_And_44px_Rows', radarCheck.hasDistinctModels && radarCheck.hasRubricProof && radarCheck.rowH >= 42 && !radarCheck.txt.includes('$1x'), `rowH=${radarCheck.rowH}, ok=${radarCheck.hasRubricProof}, B=${radarCheck.huber.loo_med_mult}x vs D=${radarCheck.selected.loo_med_mult}x`);
   await cdp.shot(path.join(SHOTS_DIR, '1-board.png'));
 
   // 2. Stale selection + empty state + filters + conditional labels check
   await cdp.eval(`document.querySelector('[data-subset="early"]').click()`);
-  const earlySync = await cdp.eval(`({ slug: window.TITAN_STATE.slug, notSentora: window.TITAN_STATE.slug !== 'sentora-curator' })`);
+  const earlySync = await cdp.eval(`({ slug: window.TITAN_STATE.slug, notTop: window.TITAN_STATE.slug !== 'steakhouse-financial' })`);
   await cdp.eval(`(() => { const q = document.getElementById('qInput'); q.value='nonexistent_xyz_protocol'; q.dispatchEvent(new Event('input')); })()`);
   const emptyCheck = await cdp.eval(`document.getElementById('app').innerText.includes('No protocols match')`);
   await cdp.eval(`document.querySelector('[data-reset="1"]').click()`);
-  ok('02_Stale_Selection_Sync_And_Empty_State', earlySync.notSentora && emptyCheck, `syncedSlug=${earlySync.slug}, emptyState=${emptyCheck}`);
+  ok('02_Stale_Selection_Sync_And_Empty_State', earlySync.notTop && emptyCheck, `syncedSlug=${earlySync.slug}, emptyState=${emptyCheck}`);
 
-  // 3. Protocol Research (Firelight @ $5,000, 7%) -> check itemized reconciliation, BE drop, 0% outcome, capture 2-detail.png
+  // 3. Protocol Research (Firelight @ $5,000, 7%) -> exact decomposition, counterfactuals, FXRP->stXRP, P25/P75 propagation, capture 2-detail.png
   await cdp.eval(`window.TITAN_SET({ view: 'research', slug: 'firelight', budget: 5000, dropShare: 0.07 })`);
   await new Promise((r) => setTimeout(r, 250));
   const fireInfo = await cdp.eval(`(() => {
     const txt = document.getElementById('app').innerText;
     return {
-      ok: txt.includes('Firelight') && txt.includes('Flare') && txt.includes('UNDERWRITING') && txt.includes('Break-Even Drop Share') && txt.includes('0% Token Reward Outcome') && !/\\bVIABLE\\b/.test(txt.replace('Minimum viable','')),
-      beMatch: txt.match(/Break-Even Drop Share[\\s\\S]{0,30}/)?.[0] || '',
+      ok: txt.includes('Firelight') && txt.includes('Flare') && txt.includes('FXRP') && txt.includes('stXRP') && txt.includes('UNDERWRITING SLASH RISK') && txt.includes('1. Base (Huber + EB)') && txt.includes('2. 7d Growth Mult') && txt.includes('3. Track-Age Maturity') && txt.includes('Counterfactual Sensitivity') && txt.includes('Break-Even Dist. Share') && txt.includes('Zero-Reward Cost (0% Drop)') && txt.includes('Gross(V)') && txt.includes('Lower (P25)') && !txt.includes('+EV') && !/\\bVIABLE\\b/.test(txt),
+      beMatch: txt.match(/Break-Even Dist\\. Share[\\s\\S]{0,30}/)?.[0] || '',
     };
   })()`);
-  ok('03_Firelight_Research_Reconciliation_And_Labels', fireInfo.ok, fireInfo.beMatch.replace(/\s+/g, ' '));
+  ok('03_Firelight_Decomposition_And_Playbook', fireInfo.ok, fireInfo.beMatch.replace(/\s+/g, ' '));
   await cdp.shot(path.join(SHOTS_DIR, '2-detail.png'));
 
-  // 4. Farming Intelligence (@ $1,000, 7% drop) -> conditional labels + 0/51 or 0/52 audit, capture 3-filtered.png
-  await cdp.eval(`window.TITAN_SET({ view: 'farming', farmFilter: 'viable', budget: 1000, dropShare: 0.07, sortBy: 'netHr', sortDir: -1 })`);
+  // 4. Farming Intelligence (@ $1,000, 7% drop) -> scenario robustness classes + P25..P75 + 0/N zero-reward audit, capture 3-filtered.png
+  await cdp.eval(`window.TITAN_SET({ view: 'farming', farmFilter: 'central', budget: 1000, dropShare: 0.07, sortBy: 'netHr', sortDir: -1 })`);
   await new Promise((r) => setTimeout(r, 250));
   const farmInfo = await cdp.eval(`(() => {
     const txt = document.getElementById('app').innerText;
     const rows = document.querySelectorAll('tbody tr.rc').length;
-    const hasCond = /COND\\. \\+EV @ 7\\.0%/.test(txt);
+    const hasScenario = (txt.includes('ROBUST (P25–P75)') || txt.includes('CENTRAL ONLY')) && txt.includes('P25..75:') && !txt.includes('+EV') && !/\\bVIABLE\\b/.test(txt);
     const hasZero = /0 \\/ \\d+/.test(txt);
-    return { rows, hasCond, hasZero };
+    return { rows, hasScenario, hasZero };
   })()`);
-  ok('04_Farming_Conditional_Labels_And_Zero_Drop_Audit', farmInfo.rows >= 10 && farmInfo.hasCond && farmInfo.hasZero, JSON.stringify(farmInfo));
+  ok('04_Farming_Conditional_Labels_And_Zero_Drop_Audit', farmInfo.rows >= 10 && farmInfo.hasScenario && farmInfo.hasZero, JSON.stringify(farmInfo));
   await cdp.shot(path.join(SHOTS_DIR, '3-filtered.png'));
 
   // 5. Also capture 1920x1080 views
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false });
-  await cdp.eval(`window.TITAN_SET({ view: 'radar', subset: 'all', cat: 'ALL', chain: 'ALL', q: '', budget: 1000, dropShare: 0.07, sortBy: 'rank', sortDir: 1, perPage: 12 })`);
+  await cdp.eval(`window.TITAN_SET({ view: 'radar', subset: 'all', cat: 'ALL', chain: 'ALL', q: '', budget: 1000, dropShare: 0.07, sortBy: 'rank', sortDir: 1, perPage: 10 })`);
   await new Promise((r) => setTimeout(r, 200));
   await cdp.shot(path.join(SHOTS_1920, '1-board-1920.png'));
   await cdp.eval(`window.TITAN_SET({ view: 'research', slug: 'firelight', budget: 5000, dropShare: 0.07 })`);
   await new Promise((r) => setTimeout(r, 200));
   await cdp.shot(path.join(SHOTS_1920, '2-detail-1920.png'));
-  await cdp.eval(`window.TITAN_SET({ view: 'farming', farmFilter: 'viable', budget: 1000, dropShare: 0.07, sortBy: 'netHr', sortDir: -1 })`);
+  await cdp.eval(`window.TITAN_SET({ view: 'farming', farmFilter: 'central', budget: 1000, dropShare: 0.07, sortBy: 'netHr', sortDir: -1 })`);
   await new Promise((r) => setTimeout(r, 200));
   await cdp.shot(path.join(SHOTS_1920, '3-filtered-1920.png'));
 
-  // 6. Test Model Research, Dataset Explorer (758), Compare (with preset), Global Search, Methodology Modal
+  // 6. Test Live/Recorded Tokens, Excluded Protocols, Model Research (A-D), Compare, Methodology Modal
+  await cdp.eval(`window.TITAN_SET({ view: 'live' })`);
+  const liveOk = await cdp.eval(`(() => { const t = document.getElementById('app').innerText; return t.includes('LIVE / RECORDED TOKENS') && t.includes('128') && t.includes('288') && t.includes('LIVE MCAP'); })()`);
+  await cdp.eval(`window.TITAN_SET({ view: 'excluded' })`);
+  const exclOk = await cdp.eval(`(() => { const t = document.getElementById('app').innerText; return t.includes('EXCLUDED PROTOCOLS') && t.includes('Tokenized Siblings (6)') && t.includes('EXCLUDED'); })()`);
   await cdp.eval(`window.TITAN_SET({ view: 'model' })`);
-  const modOk = await cdp.eval(`document.getElementById('app').innerText.includes('PRUNED') && document.getElementById('app').innerText.includes('71.4%')`);
-  await cdp.eval(`window.TITAN_SET({ view: 'dataset' })`);
-  const dsOk = await cdp.eval(`document.getElementById('app').innerText.includes('758 Snapshot Protocols')`);
+  const modOk = await cdp.eval(`(() => { const t = document.getElementById('app').innerText; return t.includes('A. Official Starter') && t.includes('D. Hybrid Base x Growth x Age [Selected]') && t.includes('66.7%'); })()`);
   await cdp.eval(`window.TITAN_SET({ view: 'compare' })`);
   await cdp.eval(`document.querySelector('[data-loadcmp="1"]')?.click()`);
   const cmpOk = await cdp.eval(`document.getElementById('app').innerText.includes('Side-by-Side Comparison')`);
   await cdp.eval(`document.querySelector('[data-clearcmp="1"]')?.click()`);
   await cdp.eval(`document.getElementById('btn-meth').click()`);
-  const methOk = await cdp.eval(`!document.getElementById('modal').hidden && document.getElementById('modal').innerText.includes('Sealed Snapshot')`);
+  const methOk = await cdp.eval(`!document.getElementById('modal').hidden && document.getElementById('modal').innerText.includes('104 watchlist rows')`);
   await cdp.eval(`document.getElementById('mdl-close').click()`);
-  ok('05_MultiPage_And_Methodology_Modal', modOk && dsOk && cmpOk && methOk, `model=${modOk}, dataset=${dsOk}, compare=${cmpOk}, modal=${methOk}`);
+  ok('05_TokenStatus_Views_ModelAD_And_Modal', liveOk && exclOk && modOk && cmpOk && methOk, `live=${liveOk}, excl=${exclOk}, model=${modOk}, compare=${cmpOk}, modal=${methOk}`);
 
   // 7. Responsive Viewports (1920, 1440, 1024, 768, 390) zero horizontal overflow & zero console errors
   await cdp.eval(`window.TITAN_SET({ view: 'radar' })`);

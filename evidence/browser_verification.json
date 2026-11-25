@@ -1,9 +1,9 @@
 {
   "checks": [
     {
-      "name": "01_PreToken_Radar_ModelD_And_44px_Rows",
+      "name": "01_Typography_And_Radar_1440x900",
       "pass": true,
-      "detail": "rowH=44, ok=true, B=3.1x vs D=3.06x"
+      "detail": "{\"h1\":27,\"kv\":28,\"ct\":15.5,\"td\":13.5,\"sub\":12,\"rowH\":48.078125,\"hasDistinctModels\":true,\"hasProof\":true}"
     },
     {
       "name": "02_Stale_Selection_Sync_And_Empty_State",
@@ -11,17 +11,17 @@
       "detail": "syncedSlug=apex-omni, emptyState=true"
     },
     {
-      "name": "03_Firelight_Decomposition_And_Playbook",
+      "name": "03_Firelight_Research_And_Playbook",
       "pass": true,
-      "detail": "Break-Even Dist. Share 4.26% Hurdle $10/h 6.52% SCEN"
+      "detail": "Break-Even Distribution Share 4.26% Distribution for $"
     },
     {
-      "name": "04_Farming_Conditional_Labels_And_Zero_Drop_Audit",
+      "name": "04_Farming_Decision_Workspace",
       "pass": true,
-      "detail": "{\"rows\":10,\"hasScenario\":true,\"hasZero\":true}"
+      "detail": "{\"rows\":10,\"hasScenario\":true}"
     },
     {
-      "name": "05_TokenStatus_Views_ModelAD_And_Modal",
+      "name": "05_All_Workspaces_And_Modal",
       "pass": true,
       "detail": "live=true, excl=true, model=true, compare=true, modal=true"
     },

@@ -1,0 +1,124 @@
+{
+  "parity": {
+    "v2_board_sha256": "a6e205b17135bbd7d63d5e75fcce9b9f40ebb4c5534e713a8adfc9e62fc18cb0",
+    "v3_board_sha256": "a6e205b17135bbd7d63d5e75fcce9b9f40ebb4c5534e713a8adfc9e62fc18cb0",
+    "exact_frozen_sha256_match": true,
+    "ranked_rows": 184,
+    "rows_equal": true,
+    "v3_dashboard_source_bytes": 62781,
+    "v3_source_headroom_vs_64k": 2755,
+    "v3_screenshots_embedded": 3
+  },
+  "v2": {
+    "label": "v2",
+    "render_ms": 862,
+    "typography": {
+      "h1_px": 22,
+      "kpi_val_px": 18,
+      "section_px": 13,
+      "td_px": 11.5,
+      "th_px": 10,
+      "min_text_px": 10,
+      "row_height_px": 44,
+      "table_width_px": 1206,
+      "header_cols": 11,
+      "stacked_sublines_in_row": 6,
+      "has_sidebar": true,
+      "visible_rows_above_900": 6
+    },
+    "tasks": {
+      "t1_watchlist_coverage": {
+        "found": true,
+        "ms": 0.8
+      },
+      "t2_top_ranked_protocol": {
+        "found": true,
+        "ms": 0.1
+      },
+      "t3_valuation_formula_components": {
+        "found": true,
+        "ms": 24.6
+      },
+      "t4_uncertainty_range": {
+        "found": true,
+        "ms": 24.9
+      },
+      "t5_farming_cost": {
+        "found": true,
+        "ms": 25.1
+      },
+      "t6_zero_reward_loss": {
+        "found": true,
+        "ms": 25.2
+      },
+      "t7_execution_restrictions": {
+        "found": true,
+        "ms": 25.3
+      },
+      "t8_recorded_tokens_isolated": {
+        "found": true,
+        "ms": 36
+      },
+      "t9_farming_workspace": {
+        "found": true,
+        "ms": 22.4
+      }
+    }
+  },
+  "v3": {
+    "label": "v3",
+    "render_ms": 833,
+    "typography": {
+      "h1_px": 27,
+      "kpi_val_px": 28,
+      "section_px": 15.5,
+      "td_px": 13.5,
+      "th_px": 11.5,
+      "min_text_px": 11.5,
+      "row_height_px": 48.08,
+      "table_width_px": 1383,
+      "header_cols": 9,
+      "stacked_sublines_in_row": 4,
+      "has_sidebar": false,
+      "visible_rows_above_900": 8
+    },
+    "tasks": {
+      "t1_watchlist_coverage": {
+        "found": true,
+        "ms": 0.4
+      },
+      "t2_top_ranked_protocol": {
+        "found": true,
+        "ms": 0
+      },
+      "t3_valuation_formula_components": {
+        "found": true,
+        "ms": 20.4
+      },
+      "t4_uncertainty_range": {
+        "found": true,
+        "ms": 20.6
+      },
+      "t5_farming_cost": {
+        "found": true,
+        "ms": 20.8
+      },
+      "t6_zero_reward_loss": {
+        "found": true,
+        "ms": 20.9
+      },
+      "t7_execution_restrictions": {
+        "found": true,
+        "ms": 21
+      },
+      "t8_recorded_tokens_isolated": {
+        "found": true,
+        "ms": 28.5
+      },
+      "t9_farming_workspace": {
+        "found": true,
+        "ms": 19.7
+      }
+    }
+  }
+}

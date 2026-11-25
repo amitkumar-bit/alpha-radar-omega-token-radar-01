@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-board.ts';
 import { WATCHLIST_SPECS } from './lib/watchlist_specs.ts';
+import { buildAllSpecs } from './lib/farm_specs.ts';
 import OMEGA from './dashboard/engine.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
@@ -64,7 +65,8 @@ const rawSnap = readFileSync(inputFile, 'utf8');
 const snapshot = JSON.parse(rawSnap);
 const snapSha256 = createHash('sha256').update(rawSnap).digest('hex');
 
-const boardModel = OMEGA.buildFullBoard(snapshot, WATCHLIST_SPECS);
+const allSpecs = buildAllSpecs(snapshot, WATCHLIST_SPECS);
+const boardModel = OMEGA.buildFullBoard(snapshot, allSpecs);
 const issue = boardIssue(boardModel.rows, snapshot);
 if (issue !== null) {
   process.stderr.write(`omega-v2: gate issue: ${issue}\n`);
@@ -82,7 +84,7 @@ const dataBundle = {
   floor_usd: snapshot.floor_usd,
   watchlist: snapshot.watchlist,
   protocols: snapshot.protocols,
-  wl_specs: WATCHLIST_SPECS,
+  wl_specs: allSpecs,
   board_sha256: boardSha256,
   snapshot_sha256: snapSha256,
   precomputed_rows_digest: boardModel.rows.map((r: any) => ({

@@ -1,285 +1,35 @@
-(function () {
-  const O = window.OMEGA, R = window.RADAR_DATA, model = O.buildFullBoard(R, R.wl_specs), rows = model.rows;
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = (n) => {
-    if (n == null || !Number.isFinite(n)) return '—';
-    const a = Math.abs(n), sg = n < 0 ? '-' : '';
-    return a >= 1e9 ? `${sg}$${(a / 1e9).toFixed(2)}B` : a >= 1e6 ? `${sg}$${(a / 1e6).toFixed(1)}M` : a >= 1e3 ? `${sg}$${(a / 1e3).toFixed(1)}K` : `${sg}$${a.toFixed(a < 20 ? 2 : 0)}`;
-  };
-  const pct = (n) => (n == null || !Number.isFinite(n) ? '—' : `${n > 0 ? '+' : ''}${n.toFixed(1)}%`);
-
-  // Genuine Live Browser-Recomputed Integrity Checks (Zero hardcoded pass pills!)
-  const dig = R.precomputed_rows_digest || [];
-  const parityOk = dig.length === rows.length && rows.every((r, i) => dig[i].slug === r.slug && dig[i].rank === r.rank && dig[i].implied_value_usd === r.implied_value_usd);
-  const wlCount = rows.filter((r) => r.is_watchlist).length;
-  const rankOk = rows.every((r, i) => r.rank === i + 1 && (i === 0 || r.implied_value_usd <= rows[i - 1].implied_value_usd));
-  const stepSumOk = rows.every((r) => Math.abs(r.farm.steps.reduce((s, st) => s + st.cost_usd, 0) - (r.farm.gas_4w_usd + r.farm.bridge_exit_usd)) < 0.05);
-  const au = model.audit_summary, auditOk = au.total === R.protocols.length;
-  const rowSet = new Set(rows.map((r) => r.slug)), sibOk = Object.keys(O.TOK_SIBLINGS).every((s) => !rowSet.has(s));
-
-  const state = {
-    view: 'board', slug: rows[0]?.slug || 'steakhouse-financial', subset: 'all', cat: 'ALL', chain: 'ALL',
-    q: '', sortBy: 'rank', sortDir: 1, budget: 1000, dropShare: 0.07, lockDays: 0, dragLimit: 0.05,
-    customGas: null, customBridge: null, customSlip: null,
-  };
-
-  function econFor(r, cap, drop) {
-    const f = r.farm;
-    return O.calcEconomics({
-      capital_usd: cap ?? state.budget,
-      gas_4w_usd: state.customGas != null && r.slug === state.slug ? state.customGas : f.gas_4w_usd,
-      bridge_exit_usd: state.customBridge != null && r.slug === state.slug ? state.customBridge : f.bridge_exit_usd,
-      slippage_bps: state.customSlip != null && r.slug === state.slug ? state.customSlip : f.slippage_bps,
-      lockup_days: state.lockDays || f.lockup_days, hours: f.hours, yield_bearing: f.yield_bearing,
-      drag_limit: state.dragLimit, drop_share: drop ?? state.dropShare, tvl_usd: r.tvl_usd,
-      implied_usd: r.implied_value_usd, non_farm_flag: f.non_farm_flag, min_viable_usd: f.min_viable_usd,
-    });
-  }
-
-  function clsBadge(c) {
-    const map = { VIABLE: 'green', MARGINAL: 'amber', RESEARCH: 'amber', 'NO FARM': 'rose', 'SKIP (LOSS)': 'slate' };
-    return `<span class="badge badge-${map[c] || 'slate'}">${c}</span>`;
-  }
-
-  function filtered(mode) {
-    const q = state.q.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (state.subset === 'wl' && !r.is_watchlist) return false;
-      if (state.subset === 'early' && r.tvl_usd >= R.floor_usd) return false;
-      if (state.subset === 'clean' && (r.farm.non_farm_flag || r.wl_conflict)) return false;
-      if ((mode === 'filtered' || state.subset === 'viable') && econFor(r).classification !== 'VIABLE') return false;
-      if (state.cat !== 'ALL' && r.category !== state.cat) return false;
-      if (state.chain !== 'ALL' && r.farm.routed_chain !== state.chain && !r.chains.includes(state.chain)) return false;
-      if (q && !(`${r.name} ${r.slug} ${r.category} ${r.farm.routed_chain}`.toLowerCase().includes(q))) return false;
-      return true;
-    }).sort((a, b) => {
-      const k = state.sortBy, d = state.sortDir;
-      if (k === 'tvl') return (a.tvl_usd - b.tvl_usd) * d;
-      if (k === 'chg7') return ((a.change_7d ?? -999) - (b.change_7d ?? -999)) * d;
-      if (k === 'age') return ((a.age_days ?? -1) - (b.age_days ?? -1)) * d;
-      if (k === 'peer') return (a.peer_incidence.rate_pct - b.peer_incidence.rate_pct) * d;
-      if (k === 'val') return (a.implied_value_usd - b.implied_value_usd) * d;
-      if (k === 'netHr') return ((econFor(a).hypPerHr || -999) - (econFor(b).hypPerHr || -999)) * d;
-      return (a.rank - b.rank) * d;
-    });
-  }
-
-  function scatterSvg(hl) {
-    const W = 540, H = hl ? 144 : 172, L = 46, R_ = 12, T = 8, B = 30;
-    const x0 = Math.log(1e6), x1 = Math.log(4e10), y0 = Math.log(1e5), y1 = Math.log(2e10);
-    const sx = (v) => L + ((Math.max(x0, Math.min(x1, v)) - x0) / (x1 - x0)) * (W - L - R_);
-    const sy = (v) => H - B - ((Math.max(y0, Math.min(y1, v)) - y0) / (y1 - y0)) * (H - T - B);
-    const ticks = [1e6, 1e7, 1e8, 1e9, 1e10];
-    const gx = ticks.map((v) => `<line x1="${sx(Math.log(v)).toFixed(1)}" y1="${T}" x2="${sx(Math.log(v)).toFixed(1)}" y2="${H - B}" stroke="#1d2b42"/><text x="${sx(Math.log(v)).toFixed(1)}" y="${H - 16}" fill="#8fa1b9" font-size="9" text-anchor="middle">${fmt(v)}</text>`).join('');
-    const gy = ticks.map((v) => `<line x1="${L}" y1="${sy(Math.log(v)).toFixed(1)}" x2="${W - R_}" y2="${sy(Math.log(v)).toFixed(1)}" stroke="#1d2b42"/><text x="${L - 5}" y="${+sy(Math.log(v)).toFixed(1) + 3}" fill="#8fa1b9" font-size="9" text-anchor="end">${fmt(v)}</text>`).join('');
-    const ln = `<line x1="${sx(x0).toFixed(1)}" y1="${sy(model.fit.b0 + model.fit.b1 * x0).toFixed(1)}" x2="${sx(x1).toFixed(1)}" y2="${sy(model.fit.b0 + model.fit.b1 * x1).toFixed(1)}" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 3"/>`;
-    const boardPts = hl ? '' : rows.map((r) => `<circle cx="${sx(Math.log(r.tvl_family)).toFixed(1)}" cy="${sy(Math.log(r.implied_value_usd)).toFixed(1)}" r="1.9" fill="#38bdf8" fill-opacity="0.35"/>`).join('');
-    const dots = model.comps.map((c) => {
-      const m = hl && c.category === hl.category;
-      return `<circle cx="${sx(Math.log(c.tvl_family)).toFixed(1)}" cy="${sy(c.y_log).toFixed(1)}" r="${m ? 3.5 : 2.3}" fill="${m ? '#38bdf8' : '#94a3b8'}" fill-opacity="${m ? 0.95 : 0.7}"/>`;
-    }).join('');
-    const mark = hl
-      ? `<line x1="${sx(Math.log(hl.tvl_family)).toFixed(1)}" y1="${sy(Math.log(hl.p75_usd)).toFixed(1)}" x2="${sx(Math.log(hl.tvl_family)).toFixed(1)}" y2="${sy(Math.log(hl.p25_usd)).toFixed(1)}" stroke="#10b981" stroke-width="2"/><circle cx="${sx(Math.log(hl.tvl_family)).toFixed(1)}" cy="${sy(Math.log(hl.implied_value_usd)).toFixed(1)}" r="5.5" fill="#10b981" stroke="#fff" stroke-width="1.5"/>`
-      : '';
-    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${gx}${gy}${boardPts}${dots}${ln}${mark}<text x="${W / 2}" y="${H - 2}" fill="#8fa1b9" font-size="9" text-anchor="middle">${hl ? `Green: ${esc(hl.name)} (±P25-75) · Slate: ${model.comps.length} Comps` : `Slate: ${model.comps.length} Stand-Alone Comps · Cyan: ${rows.length} Pre-Token Board · Amber: Huber Fit`}</text></svg>`;
-  }
-
-  function whisker(r) {
-    const a = Math.log(1e5), b = Math.log(3e10), p = (v) => Math.max(0, Math.min(100, ((Math.log(Math.max(1e5, v)) - a) / (b - a)) * 100));
-    const p10 = p(r.p10_usd), p25 = p(r.p25_usd), pt = p(r.implied_value_usd), p75 = p(r.p75_usd), p90 = p(r.p90_usd);
-    return `<div class="whisker-wrap"><div class="mono fw7 flex-bar" style="gap:8px"><span>${fmt(r.implied_value_usd)}</span><span class="muted fw4 sm">${fmt(r.p25_usd)} – ${fmt(r.p75_usd)}</span></div><div class="whisker-bar" title="P10–P90: ${fmt(r.p10_usd)}–${fmt(r.p90_usd)}"><div class="whisker-80" style="left:${p10.toFixed(1)}%;width:${Math.max(1, p90 - p10).toFixed(1)}%"></div><div class="whisker-50" style="left:${p25.toFixed(1)}%;width:${Math.max(2, p75 - p25).toFixed(1)}%"></div><div class="whisker-pt" style="left:${pt.toFixed(1)}%"></div></div></div>`;
-  }
-
-  function ctls() {
-    const cats = ['ALL', ...new Set(rows.map((r) => r.category))].sort();
-    const chs = ['ALL', ...new Set(rows.map((r) => r.farm.routed_chain))].sort();
-    const subs = [['all', `All (${rows.length})`], ['wl', `Watchlist (${wlCount})`], ['early', 'Early <$50M'], ['clean', 'Clean'], ['viable', 'Viable (FARM)']];
-    return `<div class="ctl-bar"><div class="chip-group">${subs.map(([k, l]) => `<button class="chip ${state.subset === k ? 'active' : ''}" data-subset="${k}">${l}</button>`).join('')}</div>
-      <input id="qInput" class="ctl-in ctl-search" type="search" placeholder="Search protocol, slug, category, or chain..." value="${esc(state.q)}">
-      <select id="catSel" class="ctl-sm">${cats.map((c) => `<option value="${esc(c)}" ${state.cat === c ? 'selected' : ''}>${c === 'ALL' ? 'All Categories' : esc(c)}</option>`).join('')}</select>
-      <select id="chainSel" class="ctl-sm">${chs.map((c) => `<option value="${esc(c)}" ${state.chain === c ? 'selected' : ''}>${c === 'ALL' ? 'All Chains' : esc(c)}</option>`).join('')}</select>
-      <div class="chip-group">${[500, 1000, 5000, 25000].map((b) => `<button class="chip ${state.budget === b ? 'active' : ''}" data-budget="${b}">${fmt(b)}</button>`).join('')}</div>
-      <select id="dropSel" class="ctl-sm">${[[0.035, '3.5% Drop'], [0.07, '7.0% Drop'], [0.14, '14% Drop']].map(([v, l]) => `<option value="${v}" ${state.dropShare === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`;
-  }
-
-  function renderTable(list, limit) {
-    const slice = limit ? list.slice(0, limit) : list;
-    return `<div class="tbl-wrap"><table>
-      <thead><tr>
-        <th class="sortable" data-sort="rank">#</th><th>Protocol · Home · Flags</th><th class="sortable" data-sort="tvl">TVL</th>
-        <th class="sortable" data-sort="chg7">7d</th><th class="sortable" data-sort="age">Age</th><th class="sortable" data-sort="peer">Peer Rate</th>
-        <th class="sortable" data-sort="val">If Launches (P25–P75)</th><th class="sortable" data-sort="netHr">Scenario @ ${fmt(state.budget)}</th>
-      </tr></thead>
-      <tbody>${slice.map((r) => {
-        const ec = econFor(r);
-        const b = [r.is_watchlist ? '<span class="badge badge-amber">WL</span>' : '', r.farm.non_farm_flag ? `<span class="badge badge-rose">${esc(r.farm.non_farm_flag)}</span>` : '', r.wl_conflict ? '<span class="badge badge-amber">SIBLING FLAG</span>' : ''].join(' ');
-        return `<tr class="row-click ${r.slug === state.slug ? 'row-sel' : ''}" data-slug="${esc(r.slug)}">
-          <td class="mono muted">${r.rank}</td>
-          <td><div class="proto-cell"><div class="proto-top">${esc(r.name)} ${b}</div><div class="proto-meta">${esc(r.category)} · ${esc(r.farm.routed_chain)} (min ${fmt(r.farm.min_viable_usd)}, ${r.farm.hours}h)</div></div></td>
-          <td class="mono">${fmt(r.tvl_usd)}</td>
-          <td class="mono ${(r.change_7d ?? 0) >= 0 ? 'pos' : 'neg'}">${pct(r.change_7d)}</td>
-          <td class="mono muted">${r.age_days != null ? `${r.age_days}d` : '—'}</td>
-          <td><div class="mono sm">${r.peer_incidence.rate_pct}% <span class="muted">(${r.peer_incidence.peers_tok}/${r.peer_incidence.peers_tot})</span></div><div class="peer-bar"><div class="peer-fill" style="width:${r.peer_incidence.rate_pct}%"></div></div></td>
-          <td>${whisker(r)}</td>
-          <td><div class="flex-gp">${clsBadge(ec.classification)} <span class="mono sm ${ec.hypNet > 0 ? 'pos' : 'neg'}">${fmt(ec.hypNet)} (${fmt(ec.hypPerHr)}/hr)</span></div><div class="mono muted sm">Drop ${fmt(ec.hypGross)} − Cost ${fmt(ec.totalCost)}</div></td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table></div>`;
-  }
-
-  function renderBoard() {
-    const list = filtered('board'), viableN = rows.filter((r) => econFor(r).classification === 'VIABLE').length;
-    const sumImp = rows.reduce((s, r) => s + r.implied_value_usd, 0), fin = model.oos.ladder.find((x) => x.id === 'eb');
-    const segs = [['Watchlist', au.wl, '#f59e0b'], ['Clean Pre-Token', au.clean_pre, '#38bdf8'], ['Stand-Alone U2 Comps', au.comp_u2, '#10b981'], ['Bridge/LST/CEX/Other Tok', au.tok_cex_other, '#64748b'], ['Excluded Cat/Wrap', au.excluded_cat, '#475569'], ['Token Sibling', au.excluded_sib, '#f43f5e']];
-    return `
-      <section class="kpi-grid">
-        <div class="kpi"><span class="kpi-lbl">Ranked Radar</span><span class="kpi-val">${rows.length}</span><span class="kpi-sub">${wlCount}/40 Watchlist Covered</span></div>
-        <div class="kpi"><span class="kpi-lbl">If Tokens Launch</span><span class="kpi-val">${fmt(sumImp)}</span><span class="kpi-sub">Conditional Spot Proxy Sum</span></div>
-        <div class="kpi"><span class="kpi-lbl">Held-Out OOS Miss</span><span class="kpi-val">${fin.loo_med_mult}x</span><span class="kpi-sub">LOO ${fin.n_loo} | Cross-Sec ${fin.cs_med_mult}x</span></div>
-        <div class="kpi"><span class="kpi-lbl">Interval Empirical Hit</span><span class="kpi-val">${model.oos.hit_p25_p75_pct}% / ${model.oos.hit_p10_p90_pct}%</span><span class="kpi-sub">Cross-Sec: ${model.oos.cs_hit_p25_p75_pct}% / ${model.oos.cs_hit_p10_p90_pct}%</span></div>
-        <div class="kpi"><span class="kpi-lbl">Peer Token Incidence</span><span class="kpi-val">${model.peer_incidence.base_rate_pct}%</span><span class="kpi-sub">Brier ${model.peer_incidence.brier_model} vs ${model.peer_incidence.brier_base}</span></div>
-        <div class="kpi"><span class="kpi-lbl">Viable @ ${fmt(state.budget)}</span><span class="kpi-val pos">${viableN}</span><span class="kpi-sub">Net &gt;$0, ≥$10/hr, &lt;5% Drag</span></div>
-      </section>
-      <section class="panel cp">
-        <div class="panel-hdr mb4"><span class="panel-title">Universe Accounting (${au.total} / 758 Audited)</span>
-          <div class="parity-strip-inline">
-            <span class="${parityOk ? 'pill-ok' : 'pill-err'}">Parity ${rows.length}/${rows.length} ${parityOk ? '✓' : '✗'}</span>
-            <span class="${wlCount === 40 ? 'pill-ok' : 'pill-err'}">WL ${wlCount}/40 ✓</span>
-            <span class="${auditOk ? 'pill-ok' : 'pill-err'}">Sum ${au.total}/758 ✓</span>
-            <span class="${rankOk ? 'pill-ok' : 'pill-err'}">Ranks ✓</span>
-            <span class="${stepSumOk ? 'pill-ok' : 'pill-err'}">Steps ✓</span>
-            <span class="${sibOk ? 'pill-ok' : 'pill-err'}">Siblings 6/6 ${sibOk ? '✓' : '✗'}</span>
-          </div>
-        </div>
-        <div class="stack-bar">${segs.map(([l, n, c]) => `<div class="stack-seg" style="width:${((n / au.total) * 100).toFixed(2)}%;background:${c}" title="${l}: ${n}"></div>`).join('')}</div>
-        <div class="legend-row mb0">${segs.map(([l, n, c]) => `<span class="leg-item"><span class="leg-dot" style="background:${c}"></span>${l}: <strong class="mono">${n}</strong></span>`).join('')}</div>
-      </section>
-      <section class="two-col cp-row">
-        <div class="panel mb0 cp">
-          <div class="panel-hdr mb4"><span class="panel-title">Held-Out OOS Ablation Ladder</span><span class="muted sm">n=${fin.n_loo} Stand-Alone Comps | n=${fin.n_cs_test} Cross-Sec</span></div>
-          <table class="matrix-tbl"><thead><tr><th>Stage</th><th>LOO Med</th><th>RMSE</th><th>P90</th><th>Cross-Sec</th></tr></thead>
-            <tbody>${model.oos.ladder.map((r) => `<tr class="${r.kept ? '' : 'muted'}"><td>${esc(r.label)}</td><td>${r.loo_med_mult}x</td><td>${r.loo_rmse}</td><td>${r.loo_p90_mult}x</td><td>${r.cs_med_mult}x</td></tr>`).join('')}</tbody></table>
-        </div>
-        <div class="panel mb0 cp"><div class="panel-hdr mb4"><span class="panel-title">TVL vs Spot Mcap Fit</span><span class="muted sm">Huber b1=${model.fit.b1.toFixed(2)} · Peer Incidence = ${model.peer_incidence.base_rate_pct}%</span></div>${scatterSvg(null)}</div>
-      </section>
-      ${ctls()}
-      ${renderTable(list)}`;
-  }
-
-  function renderDetail() {
-    const r = rows.find((x) => x.slug === state.slug) || rows[0], d = r.log_decomp, f = r.farm, ec = econFor(r);
-    const exact = model.comps.filter((c) => c.category === r.category).sort((a, b) => Math.abs(Math.log(a.tvl_family) - Math.log(r.tvl_family)) - Math.abs(Math.log(b.tvl_family) - Math.log(r.tvl_family)));
-    const peers = (exact.length ? exact : model.comps.filter((c) => c.sc === r.sc).sort((a, b) => Math.abs(Math.log(a.tvl_family) - Math.log(r.tvl_family)) - Math.abs(Math.log(b.tvl_family) - Math.log(r.tvl_family)))).slice(0, 3);
-    const caps = [500, 1000, 5000, 25000], drops = [0.02, 0.035, 0.07, 0.14];
-    const cfDown = Math.round(r.implied_value_usd * Math.pow(0.5, model.fit.b1)), cfUp = Math.round(r.implied_value_usd * Math.pow(2, model.fit.b1));
-    const oppBench = +(state.budget * 0.04 * ((state.lockDays || f.lockup_days) / 365)).toFixed(2);
-    return `
-      <div class="panel flex-bar cp">
-        <div class="flex-gp"><button class="btn" data-go="board">← Overview</button><strong style="font-size:15px">#${r.rank} ${esc(r.name)}</strong>
-          ${r.is_watchlist ? '<span class="badge badge-amber">WATCHLIST</span>' : '<span class="badge badge-cyan">PRE-TOKEN</span>'}
-          ${clsBadge(ec.classification)} ${r.farm.non_farm_flag ? `<span class="badge badge-rose">${esc(r.farm.non_farm_flag)}</span>` : ''}
-          ${r.wl_conflict ? `<span class="badge badge-amber" title="${esc(r.wl_conflict)}">SIBLING FLAG</span>` : ''}</div>
-        <div class="flex-gp">
-          <label class="muted sm">Budget $<input id="inCap" class="ctl-in ctl-num" type="number" min="1" value="${state.budget}"></label>
-          <select id="dropSel" class="ctl-sm">${[[0.035, '3.5% Drop'], [0.07, '7.0% Drop'], [0.14, '14% Drop']].map(([v, l]) => `<option value="${v}" ${state.dropShare === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
-          <button class="btn btn-prim" data-go="filtered">Viable Board →</button>
-        </div>
-      </div>
-
-      <section class="two-col cp-row">
-        <div class="panel mb0 cp">
-          <div class="panel-hdr mb4"><span class="panel-title">1. Snapshot Facts &amp; Conditional Proxy Build-Up</span><span class="muted sm">${esc(r.category)} · ${esc(f.routed_chain)} (T${f.gas_tier}) · Age ${r.age_days ?? '?'}d</span></div>
-          <div class="kv-grid mb6">
-            <div class="kv"><div class="kv-k">TVL / 7d Growth</div><div class="kv-v mono sm">${fmt(r.tvl_usd)} (${pct(r.change_7d)})</div></div>
-            <div class="kv"><div class="kv-k">Peer Token Rate (Descriptive)</div><div class="kv-v mono sm">${r.peer_incidence.rate_pct}% (${r.peer_incidence.peers_tok}/${r.peer_incidence.peers_tot} in ${esc(r.peer_incidence.bucket)})</div></div>
-          </div>
-          <table class="matrix-tbl"><thead><tr><th>Valuation Step</th><th>Value</th><th>Evidence / Counterfactual</th></tr></thead><tbody>
-            <tr><td>Global Huber TVL Curve</td><td>${fmt(d.global)}</td><td class="tl">b0=${model.fit.b0.toFixed(2)}, b1=${model.fit.b1.toFixed(2)} (TVL -50%→${fmt(cfDown)} / +100%→${fmt(cfUp)})</td></tr>
-            <tr><td>× Shrunk Sector (${r.sc}) / Cat (${r.n_cat_comps})</td><td>${(d.sup_mult * d.cat_mult).toFixed(3)}×</td><td class="tl">Shrinkage kSup=6, kCat=24 (7d/Age tested &amp; dropped)</td></tr>
-            <tr><td><strong>Conditional Spot Mcap Proxy</strong></td><td><strong>${fmt(r.implied_value_usd)}</strong></td><td class="tl">P25–75: ${fmt(r.p25_usd)}–${fmt(r.p75_usd)} | P10–90: ${fmt(r.p10_usd)}–${fmt(r.p90_usd)}</td></tr>
-          </tbody></table>
-        </div>
-        <div class="panel mb0 cp">
-          <div class="panel-hdr mb4"><span class="panel-title">2. Scatter Highlight &amp; ${exact.length ? `Exact Category Peers (${exact.length})` : `Sector Fallback (${r.sc})`}</span><span class="muted sm">Green = Selected · Cyan = Category</span></div>
-          ${scatterSvg(r)}
-          <table class="matrix-tbl det-tbl mt6"><thead><tr><th>Match</th><th>Peer (${peers.length})</th><th>Family TVL</th><th>Mcap</th><th>Mult</th></tr></thead><tbody>
-            ${peers.map((c) => `<tr><td><span class="badge ${c.category === r.category ? 'badge-cyan' : 'badge-slate'}">${c.category === r.category ? 'EXACT' : 'SECTOR'}</span></td><td style="font-family:sans-serif">${esc(c.name)}</td><td>${fmt(c.tvl_family)}</td><td>${fmt(c.mcap_usd)}</td><td>${(c.mcap_usd / Math.max(1, c.tvl_family)).toFixed(2)}×</td></tr>`).join('')}
-          </tbody></table>
-        </div>
-      </section>
-
-      <section class="two-col cp-row" style="margin-bottom:0">
-        <div class="panel mb0 cp">
-          <div class="panel-hdr mb4"><span class="panel-title">3. ${f.steps.length}-Step Playbook (${esc(f.assets)} on ${esc(f.routed_chain)})</span><span class="muted sm">Min ${fmt(f.min_viable_usd)} · TVL Trigger &lt;${esc(f.tvl_trigger_label)} (-30%)</span></div>
-          <div class="tbl-wrap"><table class="det-tbl"><thead><tr><th>Step</th><th>Action</th><th>Cost</th><th>Time</th><th>Check</th></tr></thead><tbody>
-            ${f.steps.map((s) => `<tr><td><span class="badge badge-cyan">${esc(s.label)}</span></td><td class="sm">${esc(s.action)}</td><td class="mono sm">$${s.cost_usd.toFixed(2)}</td><td class="mono sm">${s.time_min}m</td><td class="muted sm">${esc(s.verify)}</td></tr>`).join('')}
-            <tr style="background:#0d192c;font-weight:700"><td colspan="2" class="sm">Total Operational Cost &amp; Time (${f.hours}h)</td><td class="mono sm">$${(f.gas_4w_usd + f.bridge_exit_usd).toFixed(2)}</td><td class="mono sm">${Math.round(f.hours * 60)}m</td><td class="muted sm">Reconciled</td></tr>
-          </tbody></table></div>
-        </div>
-        <div class="panel mb0 cp">
-          <div class="panel-hdr mb4"><span class="panel-title">4. Decision Economics &amp; 2D Scenario Matrix</span><span class="muted sm">No-Action 4% T-Bill: +${fmt(oppBench)}</span></div>
-          <div class="kv-grid mb6">
-            <div class="kv"><div class="kv-k">Fees + Opp (${f.lockup_days}d)</div><div class="kv-v mono sm">${ec.valid ? `${fmt(ec.totalCost)} (${ec.totalDragPct}% | BE ${fmt(ec.breakEvenPerHr)}/hr)` : 'Invalid'}</div></div>
-            <div class="kv"><div class="kv-k">Net @ ${fmt(state.budget)} / ${(state.dropShare * 100).toFixed(1)}%</div><div class="kv-v mono sm ${ec.hypNet > 0 ? 'pos' : 'neg'}">${fmt(ec.hypNet)} (${fmt(ec.hypPerHr)}/hr)</div></div>
-          </div>
-          <table class="matrix-tbl"><thead><tr><th>Drop / Cap</th>${caps.map((c) => `<th>${fmt(c)}</th>`).join('')}</tr></thead><tbody>
-            ${drops.map((ds) => `<tr><td><strong>${(ds * 100).toFixed(1)}%</strong></td>${caps.map((c) => {
-              const g = econFor(r, c, ds), act = c === state.budget && Math.abs(ds - state.dropShare) < 0.001;
-              return `<td class="${g.hypNet > 0 && g.classification === 'VIABLE' ? 'pos' : g.hypNet < 0 ? 'neg' : 'warn'} ${act ? 'cell-active' : ''}">${fmt(g.hypNet)}</td>`;
-            }).join('')}</tr>`).join('')}
-          </tbody></table>
-          <div class="muted sm mt6"><strong>Mechanics/KYC:</strong> ${esc(f.mechanism)} (${esc(f.kyc_or_geo)}). <strong>Unknowns:</strong> ${esc(f.unknowns)}</div>
-        </div>
-      </section>`;
-  }
-
-  function renderFiltered() {
-    const list = filtered('filtered'), r = rows.find((x) => x.slug === state.slug) || list[0] || rows[0], ec = econFor(r);
-    return `
-      <section class="panel cp">
-        <div class="panel-hdr mb4">
-          <span class="panel-title">Filtered Actionable Opportunities (${list.length} VIABLE @ ${fmt(state.budget)} · Sorted High-to-Low $/hr)</span>
-          <span class="muted sm">Strict filter: Net &gt; $0 after Gas+Bridge+Slip+4% T-Bill, Fee Drag ≤5%, Est. ≥$10/hr, No Exclusion Flags</span>
-        </div>
-        <div class="legend-row mb0">
-          <span class="leg-item">Selected Playbook: <strong class="cyan">${esc(r.name)} (#${r.rank})</strong></span>
-          <span class="leg-item">Chain: <strong>${esc(r.farm.routed_chain)}</strong></span>
-          <span class="leg-item">Total Time: <strong class="mono">${r.farm.hours}h (${r.farm.steps.length} steps)</strong></span>
-          <span class="leg-item">Net / Rate: <strong class="mono pos">${fmt(ec.hypNet)} (${fmt(ec.hypPerHr)}/hr)</strong></span>
-          <span class="leg-item">TVL -30% Trigger: <strong class="mono warn">&lt;${esc(r.farm.tvl_trigger_label)}</strong></span>
-          <button class="btn btn-prim" data-go="detail">Open Full Playbook &amp; 2D Matrix →</button>
-        </div>
-      </section>
-      ${ctls()}
-      ${renderTable(list)}`;
-  }
-
-  function render() {
-    document.getElementById('hdrSub').textContent = `As of ${R.as_of} · ${rows.length} Pre-Token Ranked (${wlCount}/40 Watchlist) · ${au.total} Audited · Offline`;
-    const qp = document.getElementById('quickPick');
-    qp.innerHTML = rows.map((r) => `<option value="${esc(r.slug)}" ${r.slug === state.slug ? 'selected' : ''}>#${r.rank} ${esc(r.name)}</option>`).join('');
-    document.querySelectorAll('.nav-btn').forEach((b) => { const on = b.dataset.view === state.view; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); });
-    document.getElementById('app').innerHTML = state.view === 'board' ? renderBoard() : state.view === 'detail' ? renderDetail() : renderFiltered();
-    bind();
-  }
-
-  function bind() {
-    document.querySelectorAll('[data-subset]').forEach((b) => b.onclick = () => { state.subset = b.dataset.subset; if (state.subset === 'viable') { state.sortBy = 'netHr'; state.sortDir = -1; } render(); });
-    document.querySelectorAll('[data-budget]').forEach((b) => b.onclick = () => { state.budget = Number(b.dataset.budget); render(); });
-    document.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => { state.view = b.dataset.go; render(); });
-    document.querySelectorAll('[data-sort]').forEach((t) => t.onclick = () => { state.sortDir = state.sortBy === t.dataset.sort ? -state.sortDir : (t.dataset.sort === 'rank' ? 1 : -1); state.sortBy = t.dataset.sort; render(); });
-    document.querySelectorAll('tr.row-click').forEach((t) => t.onclick = () => { state.slug = t.dataset.slug; state.customGas = state.customBridge = state.customSlip = null; state.view = 'detail'; render(); });
-    const qi = document.getElementById('qInput'); if (qi) qi.oninput = (e) => { state.q = e.target.value; render(); const n = document.getElementById('qInput'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); };
-    const cs = document.getElementById('catSel'); if (cs) cs.onchange = (e) => { state.cat = e.target.value; render(); };
-    const ch = document.getElementById('chainSel'); if (ch) ch.onchange = (e) => { state.chain = e.target.value; render(); };
-    const ds = document.getElementById('dropSel'); if (ds) ds.onchange = (e) => { state.dropShare = Number(e.target.value); render(); };
-    const ic = document.getElementById('inCap'); if (ic) ic.onchange = (e) => { state.budget = Number(e.target.value); render(); };
-  }
-
-  document.querySelectorAll('.nav-btn').forEach((b) => b.onclick = () => { state.view = b.dataset.view; if (state.view === 'filtered') { state.subset = 'viable'; state.sortBy = 'netHr'; state.sortDir = -1; } else if (state.view === 'board') { state.subset = 'all'; state.sortBy = 'rank'; state.sortDir = 1; } render(); });
-  document.getElementById('quickPick').onchange = (e) => { state.slug = e.target.value; state.customGas = state.customBridge = state.customSlip = null; render(); };
-  document.addEventListener('keydown', (e) => { if (!(e.target instanceof Element && e.target.matches('input,select')) && ['1', '2', '3'].includes(e.key)) { state.view = e.key === '1' ? 'board' : e.key === '2' ? 'detail' : 'filtered'; render(); } });
-  window.TITAN_SET = (p) => { Object.assign(state, p); render(); };
-  window.TITAN_STATE = state;
-  render();
+(function(){
+const O=window.OMEGA,R=window.RADAR_DATA,M=O.buildFullBoard(R,R.wl_specs),rows=M.rows,D=document,el=id=>D.getElementById(id),{log,max,min,pow,round,abs}=Math,x=(n,d=2)=>n.toFixed(d);
+const E=s=>String(s??'').replace(/[&<>'"]/g,c=>`&#${c.charCodeAt(0)};`),P=n=>n==null||!Number.isFinite(n)?'—':`${n>0?'+':''}${x(n,1)}%`;
+const F=n=>{if(n==null||!Number.isFinite(n))return'—';const a=abs(n),s=n<0?'-':'';return a>=1e9?`${s}$${x(a/1e9)}B`:a>=1e6?`${s}$${x(a/1e6,1)}M`:a>=1e3?`${s}$${x(a/1e3,1)}K`:`${s}$${x(a,a<20?2:0)}`;};
+const T=(a,f)=>a.map(f).join(''),dg=R.precomputed_rows_digest||[],wlN=rows.filter(r=>r.is_watchlist).length,au=M.audit_summary,N=rows.length;
+const S={view:'board',slug:rows[0].slug,subset:'all',cat:'ALL',chain:'ALL',q:'',sortBy:'rank',sortDir:1,budget:1000,dropShare:.07,lockDays:0,dragLimit:.05};
+const ec=(r,c,d)=>O.calcEconomics({...r.farm,capital_usd:c??S.budget,lockup_days:S.lockDays||r.farm.lockup_days,drag_limit:S.dragLimit,drop_share:d??S.dropShare,tvl_usd:r.tvl_usd,implied_usd:r.implied_value_usd});
+const G=(c,b)=>`<div class='${c}'>${b}</div>`,K=(c,b)=>`<span class='${c}'>${b}</span>`,B=(c,t)=>K(`b ${c}`,t),cB=c=>B(c==='VIABLE'?'bg':c==='NO FARM'?'br':c==='SKIP (LOSS)'?'bs':'ba',c),pn=(t,s,b)=>G('pn',G('ph',K('pt',t)+K('ms',s))+b);
+const tbl=(h,b,c='mt')=>`<table class='${c}'><thead><tr>${T(h,y=>`<th>${y}</th>`)}</tr></thead><tbody>${b}</tbody></table>`,tr=(a,c='')=>`<tr${c?` class='${c}'`:''}>${T(a,y=>`<td>${y}</td>`)}</tr>`,op=(k,v,t)=>`<option value='${E(v)}'${k===v?' selected':''}>${t}</option>`,bt=(a,v,on,l)=>`<button class='ch ${on?'on':''}' data-${a}=${v}>${l}</button>`;
+function filtered(m){const q=S.q.trim().toLowerCase(),sf={tvl:r=>r.tvl_usd,chg7:r=>r.change_7d??-999,age:r=>r.age_days??-1,peer:r=>r.peer_incidence.rate_pct,val:r=>r.implied_value_usd,netHr:r=>ec(r).hypPerHr||-999}[S.sortBy]||(r=>r.rank);return rows.filter(r=>(S.subset!=='wl'||r.is_watchlist)&&(S.subset!=='early'||r.tvl_usd<R.floor_usd)&&(S.subset!=='clean'||(!r.farm.non_farm_flag&&!r.wl_conflict))&&((m!=='filtered'&&S.subset!=='viable')||ec(r).classification==='VIABLE')&&(S.cat==='ALL'||r.category===S.cat)&&(S.chain==='ALL'||r.farm.routed_chain===S.chain||r.chains.includes(S.chain))&&(!q||`${r.name} ${r.slug} ${r.category} ${r.farm.routed_chain}`.toLowerCase().includes(q))).sort((a,b)=>(sf(a)-sf(b))*S.sortDir);}
+function svg(h){const W=540,H=h?124:156,L=42,R_=10,T_=8,B_=24,x0=log(1e6),x1=log(4e10),y0=log(1e5),y1=log(2e10),ln=(u,v,a,b,s,w=1.5,d='')=>`<line x1=${u} y1=${v} x2=${a} y2=${b} stroke=${s} stroke-width=${w}${d?` stroke-dasharray='${d}'`:''} />`,sx=v=>x(L+(max(x0,min(x1,v))-x0)/(x1-x0)*(W-L-R_),1),sy=v=>x(H-B_-(max(y0,min(y1,v))-y0)/(y1-y0)*(H-T_-B_),1),C=(u,v,r,f,o=1)=>`<circle cx=${sx(u)} cy=${sy(v)} r=${r} fill=${f} opacity=${o} />`;let gp='',gt='';[1e6,1e7,1e8,1e9,1e10].forEach(v=>{const u=sx(log(v)),y=sy(log(v));gp+=`M${u},${T_}V${H-B_}M${L},${y}H${W-R_}`;gt+=`<text x=${u} y=${H-12}>${F(v)}</text><text class=ya x=${L-5} y=${+y+3}>${F(v)}</text>`;});return`<svg class=sc viewBox='0 0 ${W} ${H}'><path class=g d='${gp}' />${gt}${h?'':T(rows,r=>C(log(r.tvl_family),log(r.implied_value_usd),1.8,'#38bdf8',.35))}${T(M.comps,c=>{const m=h&&c.category===h.category;return C(log(c.tvl_family),c.y_log,m?3.5:2.2,m?'#38bdf8':'#94a6be',m?.95:.7);})}${ln(sx(x0),sy(M.fit.b0+M.fit.b1*x0),sx(x1),sy(M.fit.b0+M.fit.b1*x1),'#f59e0b',1.5,'4 3')}${h?ln(sx(log(h.tvl_family)),sy(log(h.p75_usd)),sx(log(h.tvl_family)),sy(log(h.p25_usd)),'#10b981',2)+C(log(h.tvl_family),log(h.implied_value_usd),5,'#10b981'):''}<text x=${W/2} y=${H-2}>${h?`Green:${E(h.name)}(P25-75) · Slate:${M.comps.length} Comps`:`Slate:${M.comps.length} Comps · Cyan:${N} Board · Amber:Huber`}</text></svg>`;}
+function whisker(r){const a=log(1e5),b=log(3e10),p=v=>max(0,min(100,(log(max(1e5,v))-a)/(b-a)*100)),[p1,p2,pt,p7,p9]=[r.p10_usd,r.p25_usd,r.implied_value_usd,r.p75_usd,r.p90_usd].map(p),bar=(c,l,w)=>`<div class=${c} style=left:${x(l,1)}%${w!=null?`;width:${x(w,1)}%`:''}></div>`;return G('m fw rw',`<span>${F(r.implied_value_usd)}</span>`+K('ms',`${F(r.p25_usd)}–${F(r.p75_usd)}`))+G('wb',bar('w8',p1,max(1,p9-p1))+bar('w5',p2,max(2,p7-p2))+bar('p0',pt));}
+const dSel=()=>`<select id=dropSel class=cs>${T([.035,.07,.14],v=>op(S.dropShare,v,`${x(v*100,v===.14?0:1)}% Drop`))}</select>`;
+const ctls=()=>(o=(a,s,al)=>T(['ALL',...new Set(a)].sort(),c=>op(s,c,c==='ALL'?al:E(c))),G('ct',G('g',T([['all',`All (${N})`],['wl',`WL (${wlN})`],['early','<$50M'],['clean','Clean'],['viable','Viable']],([k,l])=>bt('subset',k,S.subset===k,l)))+`<input id=qInput class='ci cq' type=search placeholder=Search... value='${E(S.q)}'><select id=catSel class=cs>${o(rows.map(r=>r.category),S.cat,'All Categories')}</select><select id=chainSel class=cs>${o(rows.map(r=>r.farm.routed_chain),S.chain,'All Chains')}</select>`+G('g',T([500,1000,5000,25000],b=>bt('budget',b,S.budget===b,F(b))))+dSel()));
+function renderTable(list){return G('tw',`<table><thead><tr>${T([['rank','#'],['','Protocol · Chain · Flags'],['tvl','TVL'],['chg7','7d'],['age','Age'],['peer','Peer Rate'],['val','If Launches (P25–P75)'],['netHr',`Hyp. @ ${F(S.budget)}`]],([k,l])=>k?`<th class=st data-sort=${k}>${l}</th>`:`<th>${l}</th>`)}</tr></thead><tbody>${T(list,r=>{const g=ec(r),{farm:f,peer_incidence:pi,rank:rk,name:nm,category:c,tvl_usd:tv,change_7d:c7,age_days:ag}=r,b=(r.is_watchlist?B('ba','WL'):'')+(f.non_farm_flag?B('br',E(f.non_farm_flag)):'')+(r.wl_conflict?B('ba','SIB'):'');return tr([K('m ms',rk),`<b>${E(nm)}</b> ${b}${G('ms',`${E(c)} · ${E(f.routed_chain)} (${F(f.min_viable_usd)},${f.hours}h)`)}`,K('m',F(tv)),K(`m ${(c7??0)>=0?'pos':'neg'}`,P(c7)),K('m ms',ag!=null?ag+'d':'—'),`${G('m ms',`<b>${pi.rate_pct}%</b> (${pi.peers_tok}/${pi.peers_tot})`)}<div class=pb><i style=width:${pi.rate_pct}%></i></div>`,whisker(r),G('g',cB(g.classification)+`<b class='m ${g.hypNet>0?'pos':'neg'}'>${F(g.hypNet)} (${F(g.hypPerHr)}/hr)</b>`)+G('ms',`Drop ${F(g.hypGross)} − Cost ${F(g.totalCost)}`)],`rc ${r.slug===S.slug?'rs':''}' data-slug='${E(r.slug)}`);})}</tbody></table>`);}
+function renderBoard(){
+const list=filtered('board'),vN=rows.filter(r=>ec(r).classification==='VIABLE').length,sum=rows.reduce((s,r)=>s+r.implied_value_usd,0),oo=M.oos,fin=oo.ladder[2],pi=M.peer_incidence;
+const segs=[['WL',au.wl,'#fa0'],['Clean',au.clean_pre,'#3bf'],['Comps',au.comp_u2,'#1b8'],['Tok/CEX',au.tok_cex_other,'#678'],['Excl',au.excluded_cat,'#456'],['Sib',au.excluded_sib,'#f46']],chk=[[dg.length===N&&rows.every((r,i)=>dg[i].slug===r.slug&&dg[i].rank===r.rank&&dg[i].implied_value_usd===r.implied_value_usd),`Parity ${N}/${N}`],[wlN===40,`WL ${wlN}/40`],[au.total===R.protocols.length,`Sum ${au.total}/758`],[rows.every((r,i)=>r.rank===i+1&&(!i||r.implied_value_usd<=rows[i-1].implied_value_usd)),'Ranks'],[rows.every(r=>abs(r.farm.steps.reduce((s,y)=>s+y.cost_usd,0)-(r.farm.gas_4w_usd+r.farm.bridge_exit_usd))<.05),'Steps'],[Object.keys(O.TOK_SIBLINGS).every(s=>!rows.some(r=>r.slug===s)),'Sib 6/6']],kpis=[['Ranked',N,`${wlN}/40 WL`,''],['If Launches',F(sum),'Cond. Proxy (NOT × Odds)',''],['OOS Miss',fin.loo_med_mult+'x',`LOO ${fin.n_loo} | CS ${fin.cs_med_mult}x`,''],['Cov (50/80)',`${oo.hit_p25_p75_pct}%/${oo.hit_p10_p90_pct}%`,`CS ${fin.n_cs_test}: ${oo.cs_hit_p25_p75_pct}%/${oo.cs_hit_p10_p90_pct}% (<80%)`,'warn'],['Peer Rate',pi.base_rate_pct+'%',`Descriptive · Brier ${pi.brier_model}/${pi.brier_base}`,''],[`Viable@${F(S.budget)}`,vN,'0% Drop = 0 Viable','pos']];
+return`<section class=ks>${T(kpis,([k,v,s,c])=>G('k',K('kt',k)+K(`kv ${c}`,v)+K(c==='warn'?'ms warn':'ms',s)))}</section>`+G('pn',G('ph',K('pt',`Universe (${au.total}/758)`)+G('g',T(chk,([ok,t])=>K(ok?'p-ok':'p-er',`${t} ${ok?'✓':'✗'}`))))+G('sk',T(segs,([,n,c])=>`<div style=width:${x(n/au.total*100)}%;background:${c}></div>`))+G('l',T(segs,([l,n,c])=>K('li',`<span class=sq style=background:${c}></span>${l}: <b class=m>${n}</b>`))))+`<section class=g2>${pn('Held-Out OOS Ablation',`n=${fin.n_loo} LOO · n=${fin.n_cs_test} CS (15/21=71.4% <80%)`,tbl(['Stage','LOO','RMSE','P90','CS'],T(oo.ladder,r=>tr([E(r.label),r.loo_med_mult+'x',r.loo_rmse,r.loo_p90_mult+'x',r.cs_med_mult+'x'],r.kept?'':'ms'))))}${pn('TVL vs Spot Mcap Fit',`Huber b1=${x(M.fit.b1)} · Peer Descriptive (Not Odds)`,svg())}</section>${ctls()}${renderTable(list)}`;
+}
+function renderDetail(){
+const r=rows.find(y=>y.slug===S.slug)||rows[0],{log_decomp:d,farm:f,peer_incidence:pi,implied_value_usd:iv}=r,g0=ec(r),t=log(r.tvl_family),ex=M.comps.filter(c=>c.category===r.category),nr=a=>[...a].sort((u,v)=>abs(log(u.tvl_family)-t)-abs(log(v.tvl_family)-t)),peers=(ex.length?nr(ex):nr(M.comps.filter(c=>c.sc===r.sc))).slice(0,3),caps=[500,1000,5000,25000],oppB=+x(S.budget*.04*(f.lockup_days/365)),sens=m=>F(round(iv*pow(m,M.fit.b1)));
+const p1=tbl(['Item','Value','Evidence / Notes'],T([['TVL/7d',`${F(r.tvl_usd)} (${P(r.change_7d)})`,'Snap TVL & 7d'],['Peer Rate',`${pi.rate_pct}% (${pi.peers_tok}/${pi.peers_tot})`,'Descriptive · Not odds'],['Huber TVL',F(d.global),`b0=${x(M.fit.b0)},b1=${x(M.fit.b1)} (-50%:${sens(.5)}/+100%:${sens(2)})`],[`×${r.sc}/Cat(${r.n_cat_comps})`,x(d.sup_mult*d.cat_mult,3)+'×','kSup=6,kCat=24 (7d/Age off)'],['<b>Cond. Proxy</b>',`<b>${F(iv)}</b>`,`P25-75:${F(r.p25_usd)}–${F(r.p75_usd)} | P10-90:${F(r.p10_usd)}–${F(r.p90_usd)}`]],([a,b,c])=>`<tr><td>${a}</td><td>${b}</td><td class=tl>${c}</td></tr>`),'mt d');
+const p2=svg(r)+tbl(['Match',`Peer (${peers.length})`,'Fam TVL','Mcap','Mult'],T(peers,c=>tr([B(c.category===r.category?'bc':'bs',c.category===r.category?'EXACT':'SECTOR'),E(c.name),F(c.tvl_family),F(c.mcap_usd),x(c.mcap_usd/max(1,c.tvl_family))+'×'])),'mt d');
+const p3=tbl(['Step','Action','Cost','Time','Check'],T(f.steps,s=>tr([B('bc',E(s.label)),E(s.action),'$'+x(s.cost_usd),s.time_min+'m',E(s.verify)]))+`<tr class=tot><td colspan=2>Total (${f.hours}h)</td><td>$${x(f.gas_4w_usd+f.bridge_exit_usd)}</td><td>${round(f.hours*60)}m</td><td class=ms>Reconciled</td></tr>`,'d');
+const p4=G('rw ms mb4',`<span>Cost(${f.lockup_days}d): <b class=m>${g0.valid?`${F(g0.totalCost)} (${g0.totalDragPct}% | BE ${F(g0.breakEvenPerHr)}/hr)`:'Err'}</b></span><span>Hyp Net: <b class='m ${g0.hypNet>0?'pos':'neg'}'>${F(g0.hypNet)} (${F(g0.hypPerHr)}/hr)</b></span>`)+tbl(['Drop/Cap',...caps.map(F)],T([0,.035,.07,.14],ds=>`<tr><td><b>${ds?x(ds*100,1)+'%':'0% (No Token)'}</b></td>${T(caps,c=>{const g=ec(r,c,ds),act=c===S.budget&&abs(ds-S.dropShare)<1e-3;return`<td class='${g.hypNet>0&&g.classification==='VIABLE'?'pos':g.hypNet<0?'neg':'warn'} ${act?'act':''}'>${F(g.hypNet)}</td>`;})}</tr>`))+G('ms',`<b>Mech:</b> ${E(f.mechanism)} (${E(f.kyc_or_geo)}). <b>Exit:</b> ${E(f.exit_mechanics)} <b>Unk:</b> ${E(f.unknowns)}`);
+return G('pn rw',G('g',`<button class=bn data-go=board>← Overview</button><b style=font-size:14px>#${r.rank} ${E(r.name)}</b>`+(r.is_watchlist?B('ba','WL'):B('bc','PRE-TOK'))+cB(g0.classification)+(f.non_farm_flag?B('br',E(f.non_farm_flag)):'')+(r.wl_conflict?B('ba','SIB'):''))+G('g',`<label class=ms>$<input id=inCap class='ci cn' type=number min=1 value=${S.budget}></label>${dSel()}<button class='bn bp' data-go=filtered>Viable →</button>`))+`<section class=g2>${pn('1. Snapshot &amp; Conditional Proxy',`${E(r.category)} · ${E(f.routed_chain)} (T${f.gas_tier}) · ${r.age_days??'?'}d`,p1)}${pn(`2. Scatter &amp; Peers (${peers.length})`,'Green=Sel · Cyan=Cat',p2)}</section><section class='g2 m0'>${pn(`3. ${f.steps.length}-Step PLAYBOOK (${E(f.assets)}/${E(f.routed_chain)})`,`Min ${F(f.min_viable_usd)} · TVL <${E(f.tvl_trigger_label)} (-30%)`,p3)}${pn('4. Economics &amp; 2D SCENARIO MATRIX',`4% T-Bill: +${F(oppB)}`,p4)}</section>`;
+}
+function renderFiltered(){const list=filtered('filtered'),r=rows.find(y=>y.slug===S.slug)||list[0]||rows[0],f=r.farm,g=ec(r);return pn(`Filtered Actionable Opportunities (${list.length} VIABLE @ ${F(S.budget)} · $/hr)`,`Hyp ${x(S.dropShare*100,1)}% drop (>0 after fees+4% T-Bill, ≤5% drag, ≥$10/hr) · 0% (No Token): 0/52 positive (-$4.10 to -$14.19 fees)`,G('rw',`<span>Selected: <b class=cy>${E(r.name)} (#${r.rank})</b> · ${E(f.routed_chain)} · ${f.hours}h (${f.steps.length} steps) · <b class='m pos'>${F(g.hypNet)} (${F(g.hypPerHr)}/hr)</b> · Exit &lt;${E(f.tvl_trigger_label)}</span><button class='bn bp' data-go=detail>Open Playbook &amp; 2D Matrix →</button>`))+ctls()+renderTable(list);}
+function render(fQ){el('hdr').textContent=`${R.as_of} · ${N} Pre-Tok (${wlN}/40 WL) · ${au.total} Audited`;el('qp').innerHTML=T(rows,r=>op(S.slug,r.slug,`#${r.rank} ${E(r.name)}`));D.querySelectorAll('.nb').forEach(b=>{const on=b.dataset.view===S.view;b.classList.toggle('on',on);b.setAttribute('aria-selected',String(on));});el('app').innerHTML=S.view==='board'?renderBoard():S.view==='detail'?renderDetail():renderFiltered();const n=el('qInput');if(n){n.oninput=e=>{S.q=e.target.value;render(1);};if(fQ){n.focus();n.setSelectionRange(n.value.length,n.value.length);}}}
+D.onchange=e=>{const t=e.target,m={qp:()=>S.slug=t.value,catSel:()=>S.cat=t.value,chainSel:()=>S.chain=t.value,dropSel:()=>S.dropShare=+t.value,inCap:()=>S.budget=+t.value}[t?.id];if(m){m();render();}};
+D.onclick=e=>{const ds=(e.target?.closest?e.target:e.target?.parentElement)?.closest('[data-view],[data-subset],[data-budget],[data-go],[data-sort],tr.rc')?.dataset;if(!ds)return;if(ds.view){S.view=ds.view;if(ds.view==='filtered')Object.assign(S,{subset:'viable',sortBy:'netHr',sortDir:-1});else if(ds.view==='board')Object.assign(S,{subset:'all',sortBy:'rank',sortDir:1});}else if(ds.subset){S.subset=ds.subset;if(ds.subset==='viable')Object.assign(S,{sortBy:'netHr',sortDir:-1});}else if(ds.budget)S.budget=+ds.budget;else if(ds.go)S.view=ds.go;else if(ds.sort){S.sortDir=S.sortBy===ds.sort?-S.sortDir:(ds.sort==='rank'?1:-1);S.sortBy=ds.sort;}else if(ds.slug)Object.assign(S,{slug:ds.slug,view:'detail'});render();};
+D.onkeydown=e=>{if(!e.target?.matches?.('input,select')&&['1','2','3'].includes(e.key)){S.view=['board','detail','filtered'][+e.key-1];render();}};
+window.TITAN_SET=p=>{Object.assign(S,p);render();};window.TITAN_STATE=S;render();
 })();

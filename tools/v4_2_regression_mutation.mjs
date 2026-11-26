@@ -47,10 +47,22 @@ function runSuite(engine, sn, sp) {
   // 10. Held-out strict audit separates train-46 q80 from full LOO q80
   const sa = engine.computeStrictAudit(board.comps, sn.protocols, ms);
   assert.ok(sa.strict_q80_log < board.oos.q80_log || Math.abs(sa.strict_q80_log - 1.8472) < 0.01, 'Strict q80 leaked full sample');
-  // 11-12. Missing/invalid/zero/negative capital inputs
+  // 11-12. Missing/invalid/zero/negative/NaN domain inputs
   assert.equal(engine.calcEconomics({ ...rows[0].farm, capital_usd: 0, tvl_usd: 1e8, implied_usd: 1e7 }).valid, false, 'Zero capital accepted');
   assert.equal(engine.calcEconomics({ ...rows[0].farm, capital_usd: -100, tvl_usd: 1e8, implied_usd: 1e7 }).valid, false, 'Negative capital accepted');
   assert.equal(engine.calcEconomics({ ...rows[0].farm, capital_usd: NaN, tvl_usd: 1e8, implied_usd: 1e7 }).valid, false, 'NaN capital accepted');
+  assert.equal(engine.calcEconomics({ ...rows[0].farm, capital_usd: 1000, drop_share: NaN, tvl_usd: 1e8, implied_usd: 1e7 }).valid, false, 'NaN drop_share accepted');
+  assert.equal(engine.calcEconomics({ ...rows[0].farm, capital_usd: 1000, organic_apr: NaN, tvl_usd: 1e8, implied_usd: 1e7 }).valid, false, 'NaN organic_apr accepted');
+  assert.equal(engine.calcEconomics({ ...rows[0].farm, capital_usd: 1000, p25_usd: NaN, tvl_usd: 1e8, implied_usd: 1e7 }).valid, false, 'NaN p25_usd accepted');
+  assert.equal(engine.calcEconomics({ ...rows[0].farm, capital_usd: 1000, slippage_bps: -10, tvl_usd: 1e8, implied_usd: 1e7 }).valid, false, 'Negative slippage_bps accepted');
+  // 12b. OPTIMISTIC-ONLY label distinct from Negative scenario
+  const optRow = rows.find((r) => {
+    const e = engine.calcEconomics({ ...r.farm, capital_usd: 1000, opp_apr: 0.04, drop_share: 0.07, tvl_usd: r.tvl_usd, implied_usd: r.implied_value_usd, p25_usd: r.p25_usd, p75_usd: r.p75_usd, hurdle_hr: 10 });
+    return e.robustClass === 'OPTIMISTIC-ONLY';
+  });
+  assert.ok(optRow, 'No OPTIMISTIC-ONLY row found');
+  const optE = engine.calcEconomics({ ...optRow.farm, capital_usd: 1000, opp_apr: 0.04, drop_share: 0.07, tvl_usd: optRow.tvl_usd, implied_usd: optRow.implied_value_usd, p25_usd: optRow.p25_usd, p75_usd: optRow.p75_usd, hurdle_hr: 10 });
+  assert.equal(optE.classLabel, 'Optimistic-only', `Expected Optimistic-only, got ${optE.classLabel}`);
   // 13. Zero-reward negative carry
   const fl = rows.find((r) => r.slug === 'firelight');
   const fl0 = engine.calcEconomics({ ...fl.farm, capital_usd: 5000, opp_apr: 0.04, organic_apr: 0, drop_share: 0, tvl_usd: fl.tvl_usd, implied_usd: fl.implied_value_usd, p25_usd: fl.p25_usd, p75_usd: fl.p75_usd });

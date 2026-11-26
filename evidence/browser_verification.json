@@ -23,7 +23,7 @@
     {
       "name": "05_V4_2_AllViews_Modal_Keyboard_InlineFilter",
       "pass": true,
-      "detail": "live=true, excl=true, model=true, cmp=true, modal=true, colOpen=true, escOk=true, inlineSearch=true"
+      "detail": "live=true, excl=true, model=true, cmp=true, modal=true, colOpen=true, escOk=true, inlineSearch=true, popVisible=true, lockZero=true, badBudget=true"
     },
     {
       "name": "06_V4_2_Responsive_6x7_Matrix_42_Checks",

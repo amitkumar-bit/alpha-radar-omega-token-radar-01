@@ -55,7 +55,7 @@
     {
       "name": "M09_bypass_execution_gate",
       "killed": true,
-      "caught_by": "Firelight gate bypassed\n+ actual - expected\n\n+ 'CENTRAL-ONLY'\n- 'EXECUTION-GATED'\n"
+      "caught_by": "No OPTIMISTIC-ONLY row found"
     },
     {
       "name": "M10_corrupt_step_sum",

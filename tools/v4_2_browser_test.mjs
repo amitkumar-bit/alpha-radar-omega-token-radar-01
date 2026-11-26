@@ -153,11 +153,18 @@ try {
   await cdp.eval(`window.TITAN_SET({ view: 'radar' }); document.getElementById('btn-flt')?.focus(); document.getElementById('btn-flt')?.click()`);
   const colOpen = await cdp.eval(`!document.getElementById('flt-pop').hidden`);
   await cdp.eval(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
-  const escOk = await cdp.eval(`document.getElementById('flt-pop').hidden && document.activeElement?.id === 'btn-flt'`);
+  const escOk = await cdp.eval(`document.getElementById('flt-pop').hidden && document.getElementById('btn-flt')?.getAttribute('aria-expanded') === 'false' && document.activeElement?.id === 'btn-flt'`);
   await cdp.eval(`(() => { const q = document.getElementById('qInput'); q.value='Fire'; q.dispatchEvent(new Event('input')); })()`);
   const inlineSearchFocus = await cdp.eval(`document.activeElement?.id === 'qInput' && document.body.innerText.includes('Firelight')`);
   await cdp.eval(`document.getElementById('btn-flt')?.click(); document.querySelector('[data-reset="1"]')?.click()`);
-  ok('05_V4_2_AllViews_Modal_Keyboard_InlineFilter', liveOk && exclOk && modOk && cmpOk && methOpen && methClosed && colOpen && escOk && inlineSearchFocus, `live=${liveOk}, excl=${exclOk}, model=${modOk}, cmp=${cmpOk}, modal=${methOpen && methClosed}, colOpen=${colOpen}, escOk=${escOk}, inlineSearch=${inlineSearchFocus}`);
+  await cdp.eval(`window.TITAN_SET({ view: 'farming', farmFilter: 'central' }); document.getElementById('btn-flt')?.click()`);
+  const popVisibleOk = await cdp.eval(`(() => { const r = document.getElementById('flt-pop').getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth; })()`);
+  await cdp.eval(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); const l = document.getElementById('inLock'); l.value='0'; l.dispatchEvent(new Event('change',{bubbles:true}));`);
+  const lockZeroOk = await cdp.eval(`document.getElementById('app').innerText.includes('0d')`);
+  await cdp.eval(`window.TITAN_SET({ budget: 0 })`);
+  const badBudgetOk = await cdp.eval(`!document.getElementById('app').innerText.includes('NaN%') && !document.getElementById('app').innerText.includes('undefined')`);
+  await cdp.eval(`window.TITAN_SET({ view: 'radar', budget: 1000, lockDays: null })`);
+  ok('05_V4_2_AllViews_Modal_Keyboard_InlineFilter', liveOk && exclOk && modOk && cmpOk && methOpen && methClosed && colOpen && escOk && inlineSearchFocus && popVisibleOk && lockZeroOk && badBudgetOk, `live=${liveOk}, excl=${exclOk}, model=${modOk}, cmp=${cmpOk}, modal=${methOpen && methClosed}, colOpen=${colOpen}, escOk=${escOk}, inlineSearch=${inlineSearchFocus}, popVisible=${popVisibleOk}, lockZero=${lockZeroOk}, badBudget=${badBudgetOk}`);
 
   // 6. Responsive Matrix: 6 Viewports x 7 Views = 42 checks!
   const matrix = [];

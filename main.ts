@@ -115,5 +115,5 @@ if (shots.length >= 3) {
 }
 
 process.stdout.write(
-  `omega-v2: ${snapshot.protocols.length} protocols, ${snapshot.watchlist.length} watchlist (${boardModel.audit_summary.wl}/40 ranked), ${boardModel.rows.length} rows, audit_sum=${boardModel.audit_summary.total}\n`,
+  `omega-v2: ${snapshot.protocols.length} protocols, ${snapshot.watchlist.length} watchlist (${boardModel.audit_summary.wl}/${snapshot.watchlist.length} ranked), ${boardModel.rows.length} rows, audit_sum=${boardModel.audit_summary.total}\n`,
 );

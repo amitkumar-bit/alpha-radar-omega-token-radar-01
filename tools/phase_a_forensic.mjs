@@ -4,7 +4,8 @@ import { WATCHLIST_SPECS } from '../lib/watchlist_specs.ts';
 import { buildAllSpecs } from '../lib/farm_specs.ts';
 
 const require = createRequire(import.meta.url);
-const OMEGA = require('../baseline_v4_1/dashboard/analysis.js');
+const OMEGA = require('../dashboard/analysis.js');
+const OMEGA_V41 = require('../baseline_v4_1/dashboard/analysis.js');
 const snap = JSON.parse(fs.readFileSync('token-radar-01-kit-v48/input/snapshot.json', 'utf8'));
 const specs = buildAllSpecs(snap, WATCHLIST_SPECS);
 const board = OMEGA.buildFullBoard(snap, specs);
@@ -81,10 +82,10 @@ for (let i = 0; i < board.comps.length; i++) {
   if (!worstComp || st.max_disp > worstComp.max_disp) worstComp = { dropped: board.comps[i].slug, ...st };
 }
 
-// D2 / D3 / D6: Yield-bearing & economics audit
+// D2 / D3 / D6: Yield-bearing & economics audit (V4.1 zero-opp bug vs V4.2 uniform opp)
 const econCurrent = board.rows.map((r) => ({
   row: r,
-  econ: OMEGA.calcEconomics({ ...r.farm, capital_usd: 1000, opp_apr: 0.04, organic_apr: 0, drop_share: 0.07, tvl_usd: r.tvl_usd, implied_usd: r.implied_value_usd, p25_usd: r.p25_usd, p75_usd: r.p75_usd, hurdle_hr: 10 }),
+  econ: OMEGA_V41.calcEconomics({ ...r.farm, capital_usd: 1000, opp_apr: 0.04, organic_apr: 0, drop_share: 0.07, tvl_usd: r.tvl_usd, implied_usd: r.implied_value_usd, p25_usd: r.p25_usd, p75_usd: r.p75_usd, hurdle_hr: 10 }),
 }));
 // Corrected: do NOT exempt yield_bearing from opp_apr when snapshot has 0% verified APY
 const econUniformOpp = board.rows.map((r) => ({

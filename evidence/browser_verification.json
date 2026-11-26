@@ -3,7 +3,7 @@
     {
       "name": "01_Typography_And_Radar_1440x900",
       "pass": true,
-      "detail": "{\"h1\":27,\"kv\":28,\"ct\":15.5,\"td\":13.5,\"sub\":12,\"rowH\":48.078125,\"hasDistinctModels\":true,\"hasProof\":true}"
+      "detail": "{\"h1\":27,\"kv\":28,\"ct\":15.5,\"td\":13.5,\"sub\":12,\"rowH\":47.078125,\"hasDistinctModels\":true,\"hasProof\":true}"
     },
     {
       "name": "02_Stale_Selection_Sync_And_Empty_State",
@@ -13,7 +13,7 @@
     {
       "name": "03_Firelight_Research_And_Playbook",
       "pass": true,
-      "detail": "Break-Even Distribution Share 4.26% Distribution for $"
+      "detail": "Break-Even Distribution Share 4.26% Hurdle $10/hr Shar"
     },
     {
       "name": "04_Farming_Decision_Workspace",
@@ -21,9 +21,9 @@
       "detail": "{\"rows\":10,\"hasScenario\":true}"
     },
     {
-      "name": "05_All_Workspaces_And_Modal",
+      "name": "05_All_Workspaces_Modal_Search_Pagination_Reset",
       "pass": true,
-      "detail": "live=true, excl=true, model=true, compare=true, modal=true"
+      "detail": "live=true, excl=true, model=true, compare=true, modal=true, p10=true, chain=true, reset0=true"
     },
     {
       "name": "06_Responsive_5_Viewports",

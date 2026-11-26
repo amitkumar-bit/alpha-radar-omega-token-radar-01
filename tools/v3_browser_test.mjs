@@ -87,7 +87,7 @@ try {
     const h1 = cs('h1.h1'), kv = cs('.kv'), ct = cs('.ct'), td = cs('.tbl td'), sub = cs('.ks');
     const lad = window.OMEGA_BOARD.oos.ladder;
     const hasDistinctModels = lad[2].loo_med_mult !== lad[4].loo_med_mult && lad[1].loo_med_mult !== lad[4].loo_med_mult;
-    const hasProof = txt.includes('Tokenless Protocol Radar') && txt.includes('Recorded (416)') && txt.includes('Excluded (158)') && txt.includes('40 / 40') && txt.includes('Board Parity 184/184') && !txt.includes('+EV') && !/\\bVIABLE\\b/.test(txt);
+    const hasProof = txt.includes('No-Token-Recorded Radar') && txt.includes('Recorded (416)') && txt.includes('Excluded (158)') && txt.includes('40 / 40') && txt.includes('Board Parity 184/184') && !txt.includes('+EV') && !/\\bVIABLE\\b/.test(txt);
     return { h1, kv, ct, td, sub, rowH, hasDistinctModels, hasProof };
   })()`);
   ok('01_Typography_And_Radar_1440x900',
@@ -109,7 +109,7 @@ try {
   const fireInfo = await cdp.eval(`(() => {
     const txt = document.getElementById('app').innerText;
     return {
-      ok: txt.includes('Firelight') && txt.includes('Flare') && txt.includes('FXRP') && txt.includes('stXRP') && txt.includes('UNDERWRITING SLASH RISK') && txt.includes('1. Base Value (Huber + Prior)') && txt.includes('2. Seven-Day Growth Multiplier') && txt.includes('3. Tracking-Age Maturity') && txt.includes('Counterfactual Sensitivity') && txt.includes('Break-Even Distribution Share') && txt.includes('Zero-Reward Cost (0% Airdrop)') && txt.includes('Lower (25th Pct)') && !txt.includes('+EV') && !/\\bVIABLE\\b/.test(txt),
+      ok: txt.includes('Firelight') && txt.includes('Flare') && txt.includes('FXRP') && txt.includes('stXRP') && txt.includes('UNDERWRITING SLASH RISK') && txt.includes('1. Base Value (Huber + EB)') && txt.includes('2. 7d Growth (Heuristic)') && txt.includes('3. Tracking Age (Heuristic)') && txt.includes('Counterfactual Sensitivity') && txt.includes('Break-Even Distribution Share') && txt.includes('Zero-Reward Cost (0% Airdrop)') && txt.includes('Lower (25th Band)') && !txt.includes('+EV') && !/\\bVIABLE\\b/.test(txt),
       be: txt.match(/Break-Even Distribution Share[\\s\\S]{0,25}/)?.[0] || '',
     };
   })()`);
@@ -140,9 +140,19 @@ try {
   const cmpOk = await cdp.eval(`document.getElementById('app').innerText.includes('Side-by-Side Comparison')`);
   await cdp.eval(`document.querySelector('[data-clearcmp="1"]')?.click()`);
   await cdp.eval(`document.getElementById('btn-meth').click()`);
-  const methOk = await cdp.eval(`!document.getElementById('modal').hidden && document.getElementById('modal').innerText.includes('unlisted')`);
+  const methOpen = await cdp.eval(`!document.getElementById('modal').hidden && document.getElementById('modal').innerText.includes('off-WL')`);
   await cdp.eval(`document.getElementById('mdl-close').click()`);
-  ok('05_All_Workspaces_And_Modal', liveOk && exclOk && modOk && cmpOk && methOk, `live=${liveOk}, excl=${exclOk}, model=${modOk}, compare=${cmpOk}, modal=${methOk}`);
+  const methClosed = await cdp.eval(`document.getElementById('modal').hidden`);
+  const methOk = methOpen && methClosed;
+  // Also test global chain search + sliding pagination page 10->11 + 0% drop recovery
+  await cdp.eval(`window.TITAN_SET({ view: 'radar', page: 10, perPage: 8 })`);
+  const page10Ok = await cdp.eval(`window.TITAN_STATE.page === 10 && document.body.innerText.includes('Showing 73–80') && !!document.querySelector('[data-page="11"]')`);
+  await cdp.eval(`(() => { const g = document.getElementById('gsearch'); g.value='Solana'; g.dispatchEvent(new Event('input')); })()`);
+  const chainSearchOk = await cdp.eval(`document.querySelectorAll('#gdrop .gi').length >= 5`);
+  await cdp.eval(`window.TITAN_SET({ view: 'farming', dropShare: 0 })`);
+  await cdp.eval(`document.querySelector('[data-reset="1"]')?.click()`);
+  const zeroDropResetOk = await cdp.eval(`window.TITAN_STATE.dropShare === 0.07 && document.querySelectorAll('tbody tr.rc').length >= 10`);
+  ok('05_All_Workspaces_Modal_Search_Pagination_Reset', liveOk && exclOk && modOk && cmpOk && methOk && page10Ok && chainSearchOk && zeroDropResetOk, `live=${liveOk}, excl=${exclOk}, model=${modOk}, compare=${cmpOk}, modal=${methOk}, p10=${page10Ok}, chain=${chainSearchOk}, reset0=${zeroDropResetOk}`);
 
   // 6. Responsive 5 Viewports
   await cdp.eval(`window.TITAN_SET({ view: 'radar' })`);

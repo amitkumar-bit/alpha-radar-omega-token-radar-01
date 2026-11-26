@@ -1,0 +1,146 @@
+{
+  "generated_at": "2026-11-26T08:43:13.798Z",
+  "note": "Automated/AI-assisted headless Chrome verification across V2, V3 (a4f3097), and V3.1",
+  "parity": {
+    "v2_board_sha256": "a6e205b17135bbd7d63d5e75fcce9b9f40ebb4c5534e713a8adfc9e62fc18cb0",
+    "v3_1_board_sha256": "a6e205b17135bbd7d63d5e75fcce9b9f40ebb4c5534e713a8adfc9e62fc18cb0",
+    "exact_frozen_sha256_match": true,
+    "frozen_files": {
+      "dashboard/engine.js": {
+        "sha256": "353aaff845b878ac2c2d766851bb66175a8bffad98e88e23deb7da114347b915",
+        "matches_v3": true
+      },
+      "main.ts": {
+        "sha256": "45d7794168c834bf3912ca3cc55579fbbe3103ad5cb98b89e67571c2d96c72f7",
+        "matches_v3": true
+      },
+      "lib/farm_specs.ts": {
+        "sha256": "bc816bf9f77b7317e7741c5488e0037c215173c3eb7d4843a93e37c6d613365f",
+        "matches_v3": true
+      },
+      "lib/watchlist_specs.ts": {
+        "sha256": "1db9770d3acadfe80d9d722f88d24d7a5895a980262b497ff35be2adf0a191c9",
+        "matches_v3": true
+      },
+      "vendor/makefun-board.ts": {
+        "sha256": "9ca51b6e5cd84fe46cb0efa61e2ea99365a1fb0e21f2b75e6007f977f0dc326e",
+        "matches_v3": true
+      }
+    },
+    "v3_1_dashboard_source_bytes": 64778,
+    "v3_1_dossier_text_bytes": 65125,
+    "v3_1_dossier_truncated": false,
+    "v3_1_screenshots_embedded": 3
+  },
+  "v2": {
+    "label": "v2",
+    "render_ms": 860,
+    "consoleErrors": 0,
+    "typography": {
+      "h1_px": 22,
+      "kpi_val_px": 18,
+      "section_px": 13,
+      "td_px": 11.5,
+      "th_px": 10,
+      "min_text_px": 10,
+      "row_height_px": 44,
+      "table_width_px": 1206,
+      "header_cols": 11,
+      "has_sidebar": true,
+      "visible_rows_above_900": 6,
+      "footer_unclipped_at_900": true
+    },
+    "tasks": {
+      "results": {
+        "t1_watchlist_coverage": true,
+        "t2_radar_row_clarity": false,
+        "t3_cover_model_pill_accuracy": false,
+        "t4_off_watchlist_semantics": false,
+        "t5_hurdle_kpi_semantics": true,
+        "t6_research_decomposition_aligned": false,
+        "t7_peer_incidence_label": false,
+        "t8_progressive_disclosure_and_fit": false,
+        "t9_live_token_separation": true,
+        "t10_farming_semantics": false,
+        "t11_model_validation_honesty": false,
+        "t12_keyboard_row_focus": false
+      },
+      "firelight_max_bottom_px": 820,
+      "pass_count": 3
+    }
+  },
+  "v3": {
+    "label": "v3",
+    "render_ms": 870,
+    "consoleErrors": 0,
+    "typography": {
+      "h1_px": 27,
+      "kpi_val_px": 28,
+      "section_px": 15.5,
+      "td_px": 13.5,
+      "th_px": 11.5,
+      "min_text_px": 11.5,
+      "row_height_px": 48.08,
+      "table_width_px": 1383,
+      "header_cols": 9,
+      "has_sidebar": false,
+      "visible_rows_above_900": 8,
+      "footer_unclipped_at_900": false
+    },
+    "tasks": {
+      "results": {
+        "t1_watchlist_coverage": true,
+        "t2_radar_row_clarity": false,
+        "t3_cover_model_pill_accuracy": false,
+        "t4_off_watchlist_semantics": false,
+        "t5_hurdle_kpi_semantics": false,
+        "t6_research_decomposition_aligned": false,
+        "t7_peer_incidence_label": false,
+        "t8_progressive_disclosure_and_fit": false,
+        "t9_live_token_separation": true,
+        "t10_farming_semantics": false,
+        "t11_model_validation_honesty": false,
+        "t12_keyboard_row_focus": false
+      },
+      "firelight_max_bottom_px": 917,
+      "pass_count": 2
+    }
+  },
+  "v3_1": {
+    "label": "v3_1",
+    "render_ms": 894,
+    "consoleErrors": 0,
+    "typography": {
+      "h1_px": 27,
+      "kpi_val_px": 28,
+      "section_px": 15.5,
+      "td_px": 13.5,
+      "th_px": 11.5,
+      "min_text_px": 11.5,
+      "row_height_px": 47.08,
+      "table_width_px": 1398,
+      "header_cols": 9,
+      "has_sidebar": false,
+      "visible_rows_above_900": 8,
+      "footer_unclipped_at_900": true
+    },
+    "tasks": {
+      "results": {
+        "t1_watchlist_coverage": true,
+        "t2_radar_row_clarity": true,
+        "t3_cover_model_pill_accuracy": true,
+        "t4_off_watchlist_semantics": true,
+        "t5_hurdle_kpi_semantics": true,
+        "t6_research_decomposition_aligned": true,
+        "t7_peer_incidence_label": true,
+        "t8_progressive_disclosure_and_fit": true,
+        "t9_live_token_separation": true,
+        "t10_farming_semantics": true,
+        "t11_model_validation_honesty": true,
+        "t12_keyboard_row_focus": true
+      },
+      "firelight_max_bottom_px": 867,
+      "pass_count": 12
+    }
+  }
+}

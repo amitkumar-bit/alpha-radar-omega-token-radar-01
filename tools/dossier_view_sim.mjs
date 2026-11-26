@@ -3,7 +3,7 @@ import fs from 'node:fs';
 // Verifies actual emitted UTF-8 text inside dossier.json against:
 // 1) buildDossier 65,536 B cap
 // 2) dossier-view/v1 12,288-token cap at 1440x900 (28,356 jsonBytes after 2,836 image tokens)
-const dossier = JSON.parse(fs.readFileSync('v4_1_candidate/evidence/win_out_1/dossier.json', 'utf8'));
+const dossier = JSON.parse(fs.readFileSync('v4_2_candidate/evidence/win_out_1/dossier.json', 'utf8'));
 const jsonBytes = (s) => Buffer.byteLength(JSON.stringify(s), 'utf8') - 2;
 const BUDGET_JSON_BYTES = (12288 - 2836) * 3; // 28,356 jsonBytes at 1440x900
 const viewHeader = '[dossier-view/v1 · text prefix · 3 screenshots shown below in 2 images (1 cover + 1 sheet)]\n';
@@ -80,5 +80,5 @@ const out = {
   target_function_visibility: targets.map(checkFunctionBody),
   emitted_tail_preview: emittedText.slice(-180),
 };
-fs.writeFileSync('v4_1_candidate/evidence/dossier_visibility_audit.json', JSON.stringify(out, null, 2));
+fs.writeFileSync('v4_2_candidate/evidence/dossier_visibility_audit.json', JSON.stringify(out, null, 2));
 console.log(JSON.stringify(out, null, 2));

@@ -1,40 +1,294 @@
 {
   "checks": [
     {
-      "name": "01_V4_1_Light_Radar_Nav_Sans_Typography",
+      "name": "01_V4_2_Radar_Hierarchy_Formula_RobustWarning",
       "pass": true,
-      "detail": "{\"bg\":\"rgb(248, 250, 252)\",\"isLight\":true,\"sansOnly\":true,\"noAv\":true,\"noFakeQuantiles\":true,\"h1\":24,\"kv\":28,\"td\":14,\"footBottom\":790,\"hasProof\":true}"
+      "detail": "{\"bg\":\"rgb(248, 250, 252)\",\"isLight\":true,\"sansOnly\":true,\"noAv\":true,\"noFakeQ\":true,\"h1\":26,\"kv\":28,\"td\":14,\"rows\":7,\"footBottom\":874,\"visControls\":true,\"hasProof\":true}"
     },
     {
-      "name": "02_V4_1_Research_Redesign_And_Organic_Yield",
+      "name": "02_V4_2_Research_Decomposition_Fallback_Stress_Realization",
       "pass": true,
-      "detail": "{\"ok\":true,\"maxB\":678,\"scatterH\":177,\"detCollapsed\":true,\"noFakeQuantiles\":true,\"detOpenOk\":true,\"fireOrg4\":true}"
+      "detail": "{\"ok\":true,\"maxB\":836,\"scatterH\":151,\"noFakeQ\":true,\"fireLoss05\":true,\"fireOrg4\":true,\"fireReal50\":true}"
     },
     {
-      "name": "03_V4_1_Farming_Funnel_And_Dynamic_ZeroReward",
+      "name": "03_V4_2_Farming_Decision_Table_And_EmptyState",
       "pass": true,
-      "detail": "{\"rows\":7,\"footBottom\":718,\"ok\":true,\"farmOrg8\":true}"
+      "detail": "{\"rows\":7,\"footBottom\":793,\"ok\":true,\"robustEmptyOk\":true}"
     },
     {
-      "name": "04_V4_1_Restrained_Dark_Theme",
+      "name": "04_V4_2_Dark_Theme_Parity",
       "pass": true,
       "detail": "{\"attr\":\"dark\",\"bg\":\"rgb(11, 13, 16)\"}"
     },
     {
-      "name": "05_V4_1_Nav_Modal_Keyboard_Popover_Reset",
+      "name": "05_V4_2_AllViews_Modal_Keyboard_InlineFilter",
       "pass": true,
-      "detail": "live=true, excl=true, model=true, cmp=true, modal=true, p10=true, chain=true, fltPersist=true, escNoSteal=true, reset0=true"
+      "detail": "live=true, excl=true, model=true, cmp=true, modal=true, colOpen=true, escOk=true, inlineSearch=true"
     },
     {
-      "name": "06_V4_1_Responsive_5_Viewports",
+      "name": "06_V4_2_Responsive_6x7_Matrix_42_Checks",
       "pass": true,
-      "detail": "[{\"width\":1920,\"height\":1080,\"noHorizOverflow\":true},{\"width\":1440,\"height\":900,\"noHorizOverflow\":true},{\"width\":1024,\"height\":768,\"noHorizOverflow\":true},{\"width\":768,\"height\":1024,\"noHorizOverflow\":true},{\"width\":390,\"height\":844,\"noHorizOverflow\":true}]"
+      "detail": "42/42 passed"
     },
     {
-      "name": "07_V4_1_Zero_Console_Errors",
+      "name": "07_V4_2_Zero_Console_Errors",
       "pass": true,
       "detail": "errors=0"
     }
   ],
-  "errors": []
+  "errors": [],
+  "responsive_matrix": [
+    {
+      "w": 1920,
+      "h": 1080,
+      "v": "radar",
+      "ok": true
+    },
+    {
+      "w": 1920,
+      "h": 1080,
+      "v": "live",
+      "ok": true
+    },
+    {
+      "w": 1920,
+      "h": 1080,
+      "v": "excluded",
+      "ok": true
+    },
+    {
+      "w": 1920,
+      "h": 1080,
+      "v": "research",
+      "ok": true
+    },
+    {
+      "w": 1920,
+      "h": 1080,
+      "v": "farming",
+      "ok": true
+    },
+    {
+      "w": 1920,
+      "h": 1080,
+      "v": "model",
+      "ok": true
+    },
+    {
+      "w": 1920,
+      "h": 1080,
+      "v": "compare",
+      "ok": true
+    },
+    {
+      "w": 1440,
+      "h": 900,
+      "v": "radar",
+      "ok": true
+    },
+    {
+      "w": 1440,
+      "h": 900,
+      "v": "live",
+      "ok": true
+    },
+    {
+      "w": 1440,
+      "h": 900,
+      "v": "excluded",
+      "ok": true
+    },
+    {
+      "w": 1440,
+      "h": 900,
+      "v": "research",
+      "ok": true
+    },
+    {
+      "w": 1440,
+      "h": 900,
+      "v": "farming",
+      "ok": true
+    },
+    {
+      "w": 1440,
+      "h": 900,
+      "v": "model",
+      "ok": true
+    },
+    {
+      "w": 1440,
+      "h": 900,
+      "v": "compare",
+      "ok": true
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "v": "radar",
+      "ok": true
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "v": "live",
+      "ok": true
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "v": "excluded",
+      "ok": true
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "v": "research",
+      "ok": true
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "v": "farming",
+      "ok": true
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "v": "model",
+      "ok": true
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "v": "compare",
+      "ok": true
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "v": "radar",
+      "ok": true
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "v": "live",
+      "ok": true
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "v": "excluded",
+      "ok": true
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "v": "research",
+      "ok": true
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "v": "farming",
+      "ok": true
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "v": "model",
+      "ok": true
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "v": "compare",
+      "ok": true
+    },
+    {
+      "w": 768,
+      "h": 1024,
+      "v": "radar",
+      "ok": true
+    },
+    {
+      "w": 768,
+      "h": 1024,
+      "v": "live",
+      "ok": true
+    },
+    {
+      "w": 768,
+      "h": 1024,
+      "v": "excluded",
+      "ok": true
+    },
+    {
+      "w": 768,
+      "h": 1024,
+      "v": "research",
+      "ok": true
+    },
+    {
+      "w": 768,
+      "h": 1024,
+      "v": "farming",
+      "ok": true
+    },
+    {
+      "w": 768,
+      "h": 1024,
+      "v": "model",
+      "ok": true
+    },
+    {
+      "w": 768,
+      "h": 1024,
+      "v": "compare",
+      "ok": true
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "v": "radar",
+      "ok": true
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "v": "live",
+      "ok": true
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "v": "excluded",
+      "ok": true
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "v": "research",
+      "ok": true
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "v": "farming",
+      "ok": true
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "v": "model",
+      "ok": true
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "v": "compare",
+      "ok": true
+    }
+  ]
 }

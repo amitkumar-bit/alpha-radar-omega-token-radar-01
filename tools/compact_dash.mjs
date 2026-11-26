@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const dir = 'v4_1_candidate/dashboard';
+const dir = 'v4_2_candidate/dashboard';
 
 // --- CSS compactor ---
 function compactCss(src) {

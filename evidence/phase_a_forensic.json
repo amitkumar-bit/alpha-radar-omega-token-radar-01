@@ -1,0 +1,182 @@
+{
+  "partition": {
+    "total_protocols": 758,
+    "unique_slugs": 758,
+    "ranked": 184,
+    "watchlist_covered": 40,
+    "watchlist_missing": [],
+    "off_wl_clean": 144,
+    "recorded_live": 416,
+    "excluded": 158,
+    "sum_check": 758,
+    "disjoint": true,
+    "yb_total_in_184": 56
+  },
+  "c3_validation": {
+    "ladder": [
+      {
+        "id": "flat",
+        "label": "Flat median",
+        "selected": false,
+        "n_loo": 89,
+        "n_cs_train": 46,
+        "n_cs_test": 21,
+        "loo_med_mult": 3.52,
+        "loo_rmse": 2.129,
+        "loo_p90_mult": 31.86,
+        "cs_med_mult": 5,
+        "cs_rmse": 2.387
+      },
+      {
+        "id": "A",
+        "label": "A. Official Starter",
+        "selected": false,
+        "n_loo": 89,
+        "n_cs_train": 46,
+        "n_cs_test": 21,
+        "loo_med_mult": 4.43,
+        "loo_rmse": 2.19,
+        "loo_p90_mult": 27.89,
+        "cs_med_mult": 4.63,
+        "cs_rmse": 2.88
+      },
+      {
+        "id": "B",
+        "label": "B. Huber + EB (no growth/age)",
+        "selected": false,
+        "n_loo": 89,
+        "n_cs_train": 46,
+        "n_cs_test": 21,
+        "loo_med_mult": 3.1,
+        "loo_rmse": 2.02,
+        "loo_p90_mult": 32.63,
+        "cs_med_mult": 3.15,
+        "cs_rmse": 2.404
+      },
+      {
+        "id": "C",
+        "label": "C. Joint Ridge2 (marginal w)",
+        "selected": false,
+        "n_loo": 89,
+        "n_cs_train": 46,
+        "n_cs_test": 21,
+        "loo_med_mult": 3.07,
+        "loo_rmse": 2.031,
+        "loo_p90_mult": 32.62,
+        "cs_med_mult": 3.15,
+        "cs_rmse": 2.414
+      },
+      {
+        "id": "D",
+        "label": "D. Hybrid Base x Growth x Age [Selected]",
+        "selected": true,
+        "n_loo": 89,
+        "n_cs_train": 46,
+        "n_cs_test": 21,
+        "loo_med_mult": 3.06,
+        "loo_rmse": 2.028,
+        "loo_p90_mult": 30.37,
+        "cs_med_mult": 3.16,
+        "cs_rmse": 2.445
+      }
+    ],
+    "oos": {
+      "q50": 1.1541,
+      "q80": 2.487,
+      "nested_loo_80": 79.8,
+      "unnested_cs_80": 66.7
+    },
+    "strict": {
+      "strict_q50_log": 0.9128,
+      "strict_q80_log": 1.8472,
+      "strict_cs_50_pct": 47.6,
+      "strict_cs_80_pct": 61.9,
+      "brier_loo": 0.22,
+      "brier_base_loo": 0.242
+    }
+  },
+  "c4_comparables": {
+    "comps_total": 89,
+    "exact_cat_matches": 169,
+    "sector_fallback": 15,
+    "global_fallback": 0,
+    "firelight_n_cat": 0,
+    "firelight_n_sup": 14
+  },
+  "c5_rank_stability": {
+    "vs_Model_B_noGM": {
+      "spearman": 0.9791,
+      "top10_overlap": 9,
+      "top20_overlap": 18,
+      "med_disp": 6,
+      "max_disp": 35
+    },
+    "vs_D_negAge": {
+      "spearman": 0.9743,
+      "top10_overlap": 9,
+      "top20_overlap": 17,
+      "med_disp": 6,
+      "max_disp": 35
+    },
+    "vs_Growth_08x": {
+      "spearman": 0.9998,
+      "top10_overlap": 10,
+      "top20_overlap": 20,
+      "med_disp": 0,
+      "max_disp": 6
+    },
+    "worst_single_comp_jackknife": {
+      "dropped": "obol",
+      "spearman": 0.9969,
+      "top10_overlap": 10,
+      "top20_overlap": 19,
+      "med_disp": 1,
+      "max_disp": 36
+    }
+  },
+  "d2_d6_economics": {
+    "v4_1_yield_bearing_opp0": {
+      "raw_hurdle_pass": 56,
+      "gated_passing_hurdle": 8,
+      "scenario_qualified": 48,
+      "yield_bearing_in_qualified": 9,
+      "lower_band_robust": 0,
+      "zero_reward_positive": 0,
+      "med_cash_cost": 4.1,
+      "med_total_cost": 7.39
+    },
+    "v4_2_uniform_opp": {
+      "raw_hurdle_pass": 54,
+      "gated_passing_hurdle": 8,
+      "scenario_qualified": 46,
+      "yield_bearing_in_qualified": 7,
+      "lower_band_robust": 0,
+      "zero_reward_positive": 0,
+      "med_cash_cost": 4.1,
+      "med_total_cost": 8.18
+    },
+    "yield_bearing_affected_rows": [
+      "bitfi-basis",
+      "cian-yield-layer",
+      "b14g",
+      "nuva",
+      "superearn"
+    ]
+  },
+  "firelight_5k_check": {
+    "yield_bearing": false,
+    "implied_usd": 7952018,
+    "base_usd": 9061107,
+    "g_mult": 0.9496,
+    "m_mult": 0.9242,
+    "gross": 54.28,
+    "cashCost": 16.6,
+    "opp": 16.44,
+    "totalCost": 33.04,
+    "centralNet": 21.24,
+    "zeroReward": -33.04,
+    "beDropPct": 4.26,
+    "beLossPctToEraseNet": 0.425,
+    "netAfter0_5PctLoss": -3.76
+  }
+}

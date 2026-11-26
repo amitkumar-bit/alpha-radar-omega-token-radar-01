@@ -1,0 +1,66 @@
+{
+  "baseline_regression": {
+    "passed": true,
+    "summary": {
+      "ranked": 184,
+      "watchlist": 40,
+      "strict_cs_80": 61.9,
+      "firelight_loss_05": -3.76
+    }
+  },
+  "mutations_total": 10,
+  "mutations_killed": 10,
+  "mutation_score_pct": 100,
+  "details": [
+    {
+      "name": "M01_drop_watchlist_item",
+      "killed": true,
+      "caught_by": "Missing watchlist: armitage-by-wintermute\n\n1 !== 0\n"
+    },
+    {
+      "name": "M02_duplicate_protocol",
+      "killed": true,
+      "caught_by": "Duplicate candidate slugs\n\n184 !== 185\n"
+    },
+    {
+      "name": "M03_live_token_contamination",
+      "killed": true,
+      "caught_by": "Ranked count != 184\n\n419 !== 184\n"
+    },
+    {
+      "name": "M04_inert_growth_factor",
+      "killed": true,
+      "caught_by": "Growth multiplier inert"
+    },
+    {
+      "name": "M05_inverted_interval_bounds",
+      "killed": true,
+      "caught_by": "Interval disorder on steakhouse-financial"
+    },
+    {
+      "name": "M06_negative_capital_accepted",
+      "killed": true,
+      "caught_by": "Zero capital accepted\n\ntrue !== false\n"
+    },
+    {
+      "name": "M07_yield_bearing_zero_opp_bug",
+      "killed": true,
+      "caught_by": "yield_bearing row wrongly received zero opportunity cost"
+    },
+    {
+      "name": "M08_ignore_principal_loss",
+      "killed": true,
+      "caught_by": "Firelight 0.5% loss expected -3.76, got 21.24\n\n21.24 !== -3.76\n"
+    },
+    {
+      "name": "M09_bypass_execution_gate",
+      "killed": true,
+      "caught_by": "Firelight gate bypassed\n+ actual - expected\n\n+ 'CENTRAL-ONLY'\n- 'EXECUTION-GATED'\n"
+    },
+    {
+      "name": "M10_corrupt_step_sum",
+      "killed": true,
+      "caught_by": "Firelight zero-reward mismatch\n+ actual - expected\n\n+ -131.44\n- -33.04\n"
+    }
+  ]
+}

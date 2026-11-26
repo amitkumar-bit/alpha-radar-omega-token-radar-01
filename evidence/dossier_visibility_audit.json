@@ -1,23 +1,23 @@
 {
-  "buildDossier_text_bytes": 64919,
+  "buildDossier_text_bytes": 64631,
   "buildDossier_cap_bytes": 65536,
-  "buildDossier_headroom_bytes": 617,
+  "buildDossier_headroom_bytes": 905,
   "buildDossier_cut": false,
   "dossier_view_1440x900_budget_json_bytes": 28356,
-  "whole_text_json_bytes": 65345,
-  "emitted_prefix_utf8_bytes": 28084,
+  "whole_text_json_bytes": 65010,
+  "emitted_prefix_utf8_bytes": 28087,
   "emitted_prefix_json_bytes": 28356,
   "per_file_actual_visibility": [
     {
       "file": "dashboard/analysis.js",
-      "raw_bytes": 14646,
-      "emitted_bytes": 14646,
+      "raw_bytes": 15067,
+      "emitted_bytes": 15067,
       "status": "WHOLE_VISIBLE"
     },
     {
       "file": "dashboard/app.js",
-      "raw_bytes": 39164,
-      "emitted_bytes": 13286,
+      "raw_bytes": 38761,
+      "emitted_bytes": 12868,
       "status": "PARTIAL_PREFIX"
     },
     {
@@ -28,7 +28,7 @@
     },
     {
       "file": "dashboard/styles.css",
-      "raw_bytes": 9581,
+      "raw_bytes": 9275,
       "emitted_bytes": 0,
       "status": "OMITTED_BEYOND_28356_JSON_BYTES"
     }
@@ -57,7 +57,7 @@
     {
       "name": "calcEconomics",
       "status": "COMPLETE_BODY",
-      "emitted_chars": 1676
+      "emitted_chars": 2097
     },
     {
       "name": "computeStrictAudit",
@@ -90,5 +90,5 @@
       "emitted_chars": 0
     }
   ],
-  "emitted_tail_preview": "ar',topBar=''){if(!list.length)return dv('tc',`${topBar}<div class=em><div class=h2>No matches</div><div>${S.dropShare===0?`0 rows @ 0% drop & ${X(S.orgApr*100,0)}% base.`:'Reset f"
+  "emitted_tail_preview": "clean','Ungated'],['hurdle',`Qual. >= $${h0}/h`]];return `<div class=cb>${fltr(subs,m?S.farmFilter:S.subset,m?'farmfilter':'subset')}<div class=cg>${srch('qInput','Search name, cha"
 }

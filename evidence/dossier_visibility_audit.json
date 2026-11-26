@@ -1,0 +1,71 @@
+{
+  "buildDossier_text_bytes": 64240,
+  "buildDossier_cap_bytes": 65536,
+  "buildDossier_headroom_bytes": 1296,
+  "buildDossier_cut": false,
+  "dossier_view_1440x900_budget_json_bytes": 28356,
+  "dossier_text_json_bytes": 64624,
+  "form_guess": "bodies/decls (lexicographical fill)",
+  "lexicographical_visibility": [
+    {
+      "file": "analysis.js",
+      "status": "WHOLE_VISIBLE",
+      "bytes": 14580,
+      "visible_functions": [
+        "ageOf",
+        "huber",
+        "fitModel",
+        "decomposeLog",
+        "peerKy",
+        "peerStats",
+        "datedSplit",
+        "computeOosLadder",
+        "computePeerIncidence",
+        "calcEconomics",
+        "exclReason",
+        "buildFullBoard",
+        "computeStrictAudit"
+      ]
+    },
+    {
+      "file": "app.js",
+      "status": "PARTIAL (~35%, 20/58 lines)",
+      "bytes": 38387,
+      "visible_functions": [],
+      "omitted_functions": [
+        "cR",
+        "gF",
+        "sSVG",
+        "rSVG",
+        "rBar",
+        "pgs",
+        "cBar",
+        "pT",
+        "pagedView",
+        "rRad",
+        "rRes",
+        "rMkt",
+        "rFrm",
+        "rMod",
+        "rCmp",
+        "expD",
+        "go",
+        "rNav",
+        "render",
+        "fGs"
+      ]
+    },
+    {
+      "file": "index.html",
+      "status": "DECLS_OR_OMITTED_IN_WHOLE_PASS",
+      "bytes": 1326,
+      "visible_functions": []
+    },
+    {
+      "file": "styles.css",
+      "status": "DECLS_OR_OMITTED_IN_WHOLE_PASS",
+      "bytes": 9601,
+      "visible_functions": []
+    }
+  ]
+}

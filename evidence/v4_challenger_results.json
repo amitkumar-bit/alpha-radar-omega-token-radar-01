@@ -1,0 +1,222 @@
+{
+  "champion_baseline_fit": {
+    "b0": 7.29533,
+    "b1": 0.49931,
+    "jG": 0.0289,
+    "jM": -0.0819
+  },
+  "challenger_comparison": [
+    {
+      "model": "B",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.1,
+        "p90_mult": 32.63,
+        "rmse": 2.02,
+        "mae": 1.555,
+        "bias": -0.094
+      },
+      "cs_test21": {
+        "n": 21,
+        "med_mult": 3.15,
+        "p90_mult": 62.46,
+        "rmse": 2.404,
+        "mae": 1.731,
+        "bias": 0.767
+      }
+    },
+    {
+      "model": "D",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.06,
+        "p90_mult": 30.37,
+        "rmse": 2.028,
+        "mae": 1.551,
+        "bias": -0.099
+      },
+      "cs_test21": {
+        "n": 21,
+        "med_mult": 3.16,
+        "p90_mult": 56.97,
+        "rmse": 2.445,
+        "mae": 1.754,
+        "bias": 0.873
+      }
+    },
+    {
+      "model": "D_negAge",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.01,
+        "p90_mult": 32.53,
+        "rmse": 2.026,
+        "mae": 1.559,
+        "bias": -0.038
+      },
+      "cs_test21": {
+        "n": 21,
+        "med_mult": 3.16,
+        "p90_mult": 60.81,
+        "rmse": 2.422,
+        "mae": 1.738,
+        "bias": 0.798
+      }
+    },
+    {
+      "model": "t3",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.08,
+        "p90_mult": 31.13,
+        "rmse": 2.027,
+        "mae": 1.549,
+        "bias": -0.095
+      },
+      "cs_test21": {
+        "n": 21,
+        "med_mult": 3.12,
+        "p90_mult": 58.3,
+        "rmse": 2.441,
+        "mae": 1.749,
+        "bias": 0.859
+      }
+    },
+    {
+      "model": "t4",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.08,
+        "p90_mult": 30.87,
+        "rmse": 2.028,
+        "mae": 1.55,
+        "bias": -0.094
+      },
+      "cs_test21": {
+        "n": 21,
+        "med_mult": 3.14,
+        "p90_mult": 57.64,
+        "rmse": 2.443,
+        "mae": 1.751,
+        "bias": 0.866
+      }
+    },
+    {
+      "model": "t5",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.08,
+        "p90_mult": 30.77,
+        "rmse": 2.029,
+        "mae": 1.551,
+        "bias": -0.093
+      },
+      "cs_test21": {
+        "n": 21,
+        "med_mult": 3.16,
+        "p90_mult": 56.99,
+        "rmse": 2.445,
+        "mae": 1.754,
+        "bias": 0.873
+      }
+    }
+  ],
+  "identity_group_leakage": {
+    "multi_groups": [
+      [
+        "root:yield",
+        [
+          "yield-basis",
+          "yield-yak-aggregator"
+        ]
+      ]
+    ],
+    "standard_loo": {
+      "n": 89,
+      "med_mult": 3.06,
+      "p90_mult": 30.37,
+      "rmse": 2.028,
+      "mae": 1.551,
+      "bias": -0.099
+    },
+    "grouped_loo": {
+      "n": 89,
+      "med_mult": 3.06,
+      "p90_mult": 30.37,
+      "rmse": 2.028,
+      "mae": 1.55,
+      "bias": -0.1
+    }
+  },
+  "interval_calibration_challengers": {
+    "strict_train46_to_test21": {
+      "symmetric_baseline": {
+        "q50_log": 0.9128,
+        "q80_log": 1.8472,
+        "width_80_mult": 6.34,
+        "cs_cov50_pct": 47.6,
+        "cs_cov80_pct": 61.9,
+        "loo_cov80_pct": 79.8
+      },
+      "asymmetric_train_only": {
+        "q25_q75": [
+          -1.2548,
+          0.7996
+        ],
+        "q10_q90": [
+          -2.2414,
+          1.6572
+        ],
+        "cs_cov50_pct": 47.6,
+        "cs_cov80_pct": 61.9,
+        "loo_cov80_pct": 78.7
+      },
+      "heteroscedastic_tvl_scaled": {
+        "slope_abs_err_vs_log_tvl": -0.1046,
+        "q80_norm": 1.8929,
+        "mean_test_q80_mult": 5.83,
+        "cs_cov50_pct": 47.6,
+        "cs_cov80_pct": 57.1,
+        "loo_cov80_pct": 78.7,
+        "mean_loo_q80_mult": 11.55
+      },
+      "hierarchical_sector_shrunk": {
+        "cs_cov80_pct": 57.1
+      }
+    }
+  },
+  "cohort_regime_forensics": {
+    "early_train46": {
+      "cohort": "Early Listed (Train n=46)",
+      "n": 46,
+      "date_min": "2021-10-21",
+      "date_max": "2025-04-11",
+      "med_tvl_usd": 21749539,
+      "med_mcap_usd": 8003274,
+      "med_mcap_tvl_ratio": 0.234,
+      "frac_lt_25m_tvl_pct": 52.2
+    },
+    "recent_test21": {
+      "cohort": "Recent Listed (Test n=21)",
+      "n": 21,
+      "date_min": "2025-04-22",
+      "date_max": "2026-08-26",
+      "med_tvl_usd": 60029438,
+      "med_mcap_usd": 14132031,
+      "med_mcap_tvl_ratio": 0.321,
+      "frac_lt_25m_tvl_pct": 33.3
+    },
+    "undated_22": {
+      "cohort": "Undated Listed Comps (n=22)",
+      "n": 22,
+      "date_min": null,
+      "date_max": null,
+      "med_tvl_usd": 23345200,
+      "med_mcap_usd": 4775511,
+      "med_mcap_tvl_ratio": 0.107,
+      "frac_lt_25m_tvl_pct": 50
+    },
+    "pearson_age_days_vs_base_residual": -0.1329,
+    "note": "Why 61.9% coverage + bias +0.873 + jM<0: recent listed cohort (n=21) has 2.76x larger median TVL ($60.0M vs $21.7M) AND higher median MCap/TVL ratio (0.321 vs 0.234) than the earlier cohort, producing systematically positive y_log residuals under sub-linear b1=0.499 scaling."
+  }
+}

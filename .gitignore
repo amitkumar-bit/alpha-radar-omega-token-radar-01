@@ -1,0 +1,9 @@
+﻿chrome_tmp/
+jv_tmp/
+win_out*/
+win_clean/
+docker_*/
+clean_checkout*/
+*.tar.gz
+makefun_check_*.json
+

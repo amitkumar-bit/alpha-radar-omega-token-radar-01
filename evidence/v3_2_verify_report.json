@@ -1,0 +1,131 @@
+{
+  "generated_at": "2026-11-26T09:38:44.199Z",
+  "note": "Automated/AI-assisted headless Chrome benchmark across V2 (73aedb7), V3.1 (cfa5297), and V3.2",
+  "parity": {
+    "v2_board_sha256": "a6e205b17135bbd7d63d5e75fcce9b9f40ebb4c5534e713a8adfc9e62fc18cb0",
+    "v3_1_board_sha256": "a6e205b17135bbd7d63d5e75fcce9b9f40ebb4c5534e713a8adfc9e62fc18cb0",
+    "v3_2_board_sha256": "a6e205b17135bbd7d63d5e75fcce9b9f40ebb4c5534e713a8adfc9e62fc18cb0",
+    "exact_frozen_sha256_match": true,
+    "v3_2_dashboard_source_bytes": 65046,
+    "v3_2_dossier_text_bytes": 65394,
+    "v3_2_dossier_truncated": false,
+    "v3_2_screenshots_embedded": 4
+  },
+  "v2": {
+    "label": "v2",
+    "render_ms": 842,
+    "consoleErrors": 0,
+    "typography": {
+      "theme_bg": "rgb(12, 13, 16)",
+      "h1_px": 22,
+      "kpi_val_px": 18,
+      "section_px": 13,
+      "td_px": 11.5,
+      "th_px": 10,
+      "min_text_px": 10,
+      "row_height_px": 44,
+      "header_cols": 11,
+      "has_sidebar": true,
+      "visible_rows_above_900": 6,
+      "footer_unclipped_at_900": true
+    },
+    "tasks": {
+      "results": {
+        "t1_watchlist_coverage": true,
+        "t2_radar_row_clarity": false,
+        "t3_cover_model_pill_accuracy": false,
+        "t4_off_watchlist_semantics": false,
+        "t5_hurdle_kpi_semantics": true,
+        "t6_research_decomposition_aligned": false,
+        "t7_peer_incidence_label": false,
+        "t8_progressive_disclosure_and_fit": false,
+        "t14_hypothetical_organic_yield_sensitivity": false,
+        "t9_live_token_separation": true,
+        "t10_farming_semantics": false,
+        "t11_model_validation_honesty": false,
+        "t13_strict_leakage_and_brier_disclosure": false,
+        "t12_keyboard_row_focus": false
+      },
+      "firelight_max_bottom_px": 820,
+      "pass_count": 3
+    }
+  },
+  "v3_1": {
+    "label": "v3_1",
+    "render_ms": 858,
+    "consoleErrors": 0,
+    "typography": {
+      "theme_bg": "rgb(11, 14, 20)",
+      "h1_px": 27,
+      "kpi_val_px": 28,
+      "section_px": 15.5,
+      "td_px": 13.5,
+      "th_px": 11.5,
+      "min_text_px": 11.5,
+      "row_height_px": 47.08,
+      "header_cols": 9,
+      "has_sidebar": false,
+      "visible_rows_above_900": 8,
+      "footer_unclipped_at_900": true
+    },
+    "tasks": {
+      "results": {
+        "t1_watchlist_coverage": true,
+        "t2_radar_row_clarity": true,
+        "t3_cover_model_pill_accuracy": true,
+        "t4_off_watchlist_semantics": true,
+        "t5_hurdle_kpi_semantics": true,
+        "t6_research_decomposition_aligned": true,
+        "t7_peer_incidence_label": true,
+        "t8_progressive_disclosure_and_fit": true,
+        "t14_hypothetical_organic_yield_sensitivity": false,
+        "t9_live_token_separation": true,
+        "t10_farming_semantics": true,
+        "t11_model_validation_honesty": true,
+        "t13_strict_leakage_and_brier_disclosure": false,
+        "t12_keyboard_row_focus": true
+      },
+      "firelight_max_bottom_px": 867,
+      "pass_count": 12
+    }
+  },
+  "v3_2": {
+    "label": "v3_2",
+    "render_ms": 878,
+    "consoleErrors": 0,
+    "typography": {
+      "theme_bg": "rgb(248, 250, 252)",
+      "h1_px": 25,
+      "kpi_val_px": 21,
+      "section_px": 14.5,
+      "td_px": 13,
+      "th_px": 11,
+      "min_text_px": 11,
+      "row_height_px": 45.38,
+      "header_cols": 9,
+      "has_sidebar": false,
+      "visible_rows_above_900": 9,
+      "footer_unclipped_at_900": true
+    },
+    "tasks": {
+      "results": {
+        "t1_watchlist_coverage": true,
+        "t2_radar_row_clarity": true,
+        "t3_cover_model_pill_accuracy": true,
+        "t4_off_watchlist_semantics": true,
+        "t5_hurdle_kpi_semantics": true,
+        "t6_research_decomposition_aligned": true,
+        "t7_peer_incidence_label": true,
+        "t8_progressive_disclosure_and_fit": true,
+        "t14_hypothetical_organic_yield_sensitivity": true,
+        "t9_live_token_separation": true,
+        "t10_farming_semantics": true,
+        "t11_model_validation_honesty": true,
+        "t13_strict_leakage_and_brier_disclosure": true,
+        "t12_keyboard_row_focus": true
+      },
+      "firelight_max_bottom_px": 865,
+      "pass_count": 14
+    }
+  }
+}

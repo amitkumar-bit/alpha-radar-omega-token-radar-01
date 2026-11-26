@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-board.ts';
 import { WATCHLIST_SPECS } from './lib/watchlist_specs.ts';
 import { buildAllSpecs } from './lib/farm_specs.ts';
-import OMEGA from './dashboard/engine.js';
+import OMEGA from './dashboard/analysis.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const TEXT_MAX_BYTES = 65_536;

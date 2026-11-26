@@ -1,0 +1,293 @@
+{
+  "champion_fit": {
+    "b0": 7.29533,
+    "b1": 0.49931,
+    "jG_ridge": 0.0289,
+    "jM_ridge": -0.0819
+  },
+  "variants": [
+    {
+      "label": "A. Official Starter (TVL*0.25*g*m)",
+      "loo": {
+        "n": 89,
+        "med_mult": 4.43,
+        "p90_mult": 27.89,
+        "rmse": 2.19,
+        "mae_log": 1.674,
+        "bias_signed": 0.125,
+        "med_signed": 0.056,
+        "q10_signed": -2.481,
+        "q90_signed": 2.494
+      },
+      "tr_loo": {
+        "n": 46,
+        "med_mult": 4.26,
+        "p90_mult": 15.13,
+        "rmse": 1.903,
+        "mae_log": 1.497,
+        "bias_signed": 0.056,
+        "med_signed": -0.02,
+        "q10_signed": -2.358,
+        "q90_signed": 2.106
+      },
+      "cs": {
+        "n": 21,
+        "med_mult": 4.63,
+        "p90_mult": 210.04,
+        "rmse": 2.88,
+        "mae_log": 2.055,
+        "bias_signed": 0.777,
+        "med_signed": 0.497,
+        "q10_signed": -1.532,
+        "q90_signed": 3.419
+      }
+    },
+    {
+      "label": "B. Huber + EB Base Only (noG, noM)",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.1,
+        "p90_mult": 32.63,
+        "rmse": 2.02,
+        "mae_log": 1.555,
+        "bias_signed": -0.094,
+        "med_signed": 0.104,
+        "q10_signed": -2.609,
+        "q90_signed": 2.366
+      },
+      "tr_loo": {
+        "n": 46,
+        "med_mult": 2.52,
+        "p90_mult": 16.65,
+        "rmse": 1.753,
+        "mae_log": 1.352,
+        "bias_signed": -0.067,
+        "med_signed": 0.303,
+        "q10_signed": -2.128,
+        "q90_signed": 1.797
+      },
+      "cs": {
+        "n": 21,
+        "med_mult": 3.15,
+        "p90_mult": 62.46,
+        "rmse": 2.404,
+        "mae_log": 1.731,
+        "bias_signed": 0.767,
+        "med_signed": 0.235,
+        "q10_signed": -1.777,
+        "q90_signed": 2.826
+      }
+    },
+    {
+      "label": "D-Gonly. Huber + EB + Heuristic Growth (noM)",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.05,
+        "p90_mult": 32.53,
+        "rmse": 2.022,
+        "mae_log": 1.554,
+        "bias_signed": -0.061,
+        "med_signed": 0.149,
+        "q10_signed": -2.482,
+        "q90_signed": 2.395
+      },
+      "tr_loo": {
+        "n": 46,
+        "med_mult": 2.71,
+        "p90_mult": 16.22,
+        "rmse": 1.751,
+        "mae_log": 1.352,
+        "bias_signed": -0.033,
+        "med_signed": 0.343,
+        "q10_signed": -2.096,
+        "q90_signed": 1.84
+      },
+      "cs": {
+        "n": 21,
+        "med_mult": 3.16,
+        "p90_mult": 60.8,
+        "rmse": 2.422,
+        "mae_log": 1.738,
+        "bias_signed": 0.798,
+        "med_signed": 0.233,
+        "q10_signed": -1.775,
+        "q90_signed": 2.869
+      }
+    },
+    {
+      "label": "C. 2-Stage Residual Ridge (jG, jM)",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.07,
+        "p90_mult": 32.62,
+        "rmse": 2.031,
+        "mae_log": 1.562,
+        "bias_signed": -0.068,
+        "med_signed": 0.108,
+        "q10_signed": -2.66,
+        "q90_signed": 2.37
+      },
+      "tr_loo": {
+        "n": 46,
+        "med_mult": 2.57,
+        "p90_mult": 16.49,
+        "rmse": 1.748,
+        "mae_log": 1.342,
+        "bias_signed": -0.053,
+        "med_signed": 0.309,
+        "q10_signed": -2.117,
+        "q90_signed": 1.808
+      },
+      "cs": {
+        "n": 21,
+        "med_mult": 3.15,
+        "p90_mult": 61.46,
+        "rmse": 2.414,
+        "mae_log": 1.735,
+        "bias_signed": 0.785,
+        "med_signed": 0.234,
+        "q10_signed": -1.774,
+        "q90_signed": 2.851
+      }
+    },
+    {
+      "label": "D. Champion Model D (g w=0.35, +age 0.8..1.2)",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.06,
+        "p90_mult": 30.37,
+        "rmse": 2.028,
+        "mae_log": 1.551,
+        "bias_signed": -0.099,
+        "med_signed": 0.1,
+        "q10_signed": -2.394,
+        "q90_signed": 2.471
+      },
+      "tr_loo": {
+        "n": 46,
+        "med_mult": 2.49,
+        "p90_mult": 17.64,
+        "rmse": 1.757,
+        "mae_log": 1.337,
+        "bias_signed": -0.174,
+        "med_signed": 0.16,
+        "q10_signed": -2.241,
+        "q90_signed": 1.657
+      },
+      "cs": {
+        "n": 21,
+        "med_mult": 3.16,
+        "p90_mult": 56.97,
+        "rmse": 2.445,
+        "mae_log": 1.754,
+        "bias_signed": 0.873,
+        "med_signed": 0.317,
+        "q10_signed": -1.653,
+        "q90_signed": 2.903
+      }
+    },
+    {
+      "label": "D-NegAge. Huber + EB + Growth + Fitted jM age",
+      "loo": {
+        "n": 89,
+        "med_mult": 3.01,
+        "p90_mult": 32.53,
+        "rmse": 2.026,
+        "mae_log": 1.559,
+        "bias_signed": -0.038,
+        "med_signed": 0.152,
+        "q10_signed": -2.526,
+        "q90_signed": 2.395
+      },
+      "tr_loo": {
+        "n": 46,
+        "med_mult": 2.63,
+        "p90_mult": 16.17,
+        "rmse": 1.747,
+        "mae_log": 1.341,
+        "bias_signed": -0.04,
+        "med_signed": 0.326,
+        "q10_signed": -2.105,
+        "q90_signed": 1.82
+      },
+      "cs": {
+        "n": 21,
+        "med_mult": 3.16,
+        "p90_mult": 60.81,
+        "rmse": 2.422,
+        "mae_log": 1.738,
+        "bias_signed": 0.798,
+        "med_signed": 0.233,
+        "q10_signed": -1.774,
+        "q90_signed": 2.868
+      }
+    }
+  ],
+  "calibration_audit": {
+    "full_sample_q50_log": 1.1541,
+    "full_sample_q80_log": 2.487,
+    "strict_train46_q50_log": 0.9128,
+    "strict_train46_q80_log": 1.8472,
+    "loo_reported_p50_pct": 50.6,
+    "loo_reported_p80_pct": 79.8,
+    "loo_strict_nested_p50_pct": 50.6,
+    "loo_strict_nested_p80_pct": 79.8,
+    "cs_test21_using_leaked_full89_q80_pct": 66.7,
+    "cs_test21_using_strict_train46_q50_pct": 47.6,
+    "cs_test21_using_strict_train46_q80_pct": 61.9,
+    "cs_test21_using_strict_train46_asym_25_75_pct": 47.6,
+    "cs_test21_using_strict_train46_asym_10_90_pct": 61.9,
+    "undated_comps_excluded_from_cs": 22
+  },
+  "identity_group_leakage": {
+    "multi_slug_roots_in_comps": [
+      [
+        "yield",
+        [
+          "yield-basis",
+          "yield-yak-aggregator"
+        ]
+      ]
+    ],
+    "standard_loo": {
+      "n": 89,
+      "med_mult": 3.06,
+      "p90_mult": 30.37,
+      "rmse": 2.028,
+      "mae_log": 1.551,
+      "bias_signed": -0.099,
+      "med_signed": 0.1,
+      "q10_signed": -2.394,
+      "q90_signed": 2.471
+    },
+    "root_grouped_loo": {
+      "n": 89,
+      "med_mult": 3.06,
+      "p90_mult": 30.37,
+      "rmse": 2.028,
+      "mae_log": 1.55,
+      "bias_signed": -0.1,
+      "med_signed": 0.1,
+      "q10_signed": -2.392,
+      "q90_signed": 2.471
+    }
+  },
+  "peer_incidence_brier": {
+    "cohort_501_non_xc": {
+      "n": 501,
+      "tok_rate_pct": 59.7,
+      "brier_base_apparent": 0.2406,
+      "brier_base_loo": 0.2416,
+      "brier_bucket_apparent": 0.2064,
+      "brier_bucket_loo": 0.2199
+    },
+    "cohort_clean_dedup_no_vr_wr_xr_ts": {
+      "n": 416,
+      "tok_rate_pct": 56.5,
+      "brier_base_apparent": 0.2458,
+      "brier_base_loo": 0.247,
+      "brier_bucket_apparent": 0.2138,
+      "brier_bucket_loo": 0.2298
+    }
+  }
+}

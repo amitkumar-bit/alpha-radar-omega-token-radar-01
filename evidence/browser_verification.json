@@ -1,29 +1,29 @@
 {
   "checks": [
     {
-      "name": "01_Typography_And_Radar_1440x900",
+      "name": "01_Light_Theme_And_Token_Launch_Radar_1440x900",
       "pass": true,
-      "detail": "{\"h1\":27,\"kv\":28,\"ct\":15.5,\"td\":13.5,\"sub\":12,\"rowH\":47.078125,\"hasDistinctModels\":true,\"hasProof\":true}"
+      "detail": "{\"bg\":\"rgb(248, 250, 252)\",\"isLight\":true,\"h1\":25,\"kv\":21,\"td\":13,\"rowH\":45.375,\"footBottom\":863,\"hasProof\":true,\"scrollH\":900}"
     },
     {
-      "name": "02_Stale_Selection_Sync_And_Empty_State",
+      "name": "02_Firelight_Research_And_Hypothetical_Yield",
       "pass": true,
-      "detail": "syncedSlug=apex-omni, emptyState=true"
+      "detail": "maxB=865, org4=true"
     },
     {
-      "name": "03_Firelight_Research_And_Playbook",
+      "name": "03_Farming_Workspace_Light",
       "pass": true,
-      "detail": "Break-Even Distribution Share 4.26% Hurdle $10/hr Shar"
+      "detail": "{\"rows\":10,\"footBottom\":765,\"ok\":true}"
     },
     {
-      "name": "04_Farming_Decision_Workspace",
+      "name": "04_Restrained_Dark_Theme_Toggle",
       "pass": true,
-      "detail": "{\"rows\":10,\"hasScenario\":true}"
+      "detail": "{\"attr\":\"dark\",\"bg\":\"rgb(11, 13, 16)\"}"
     },
     {
-      "name": "05_All_Workspaces_Modal_Search_Pagination_Reset",
+      "name": "05_Workspaces_Modal_Search_Pagination_Reset",
       "pass": true,
-      "detail": "live=true, excl=true, model=true, compare=true, modal=true, p10=true, chain=true, reset0=true"
+      "detail": "live=true, excl=true, model=true, cmp=true, modal=true, p10=true, chain=true, reset0=true"
     },
     {
       "name": "06_Responsive_5_Viewports",

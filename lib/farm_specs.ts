@@ -22,7 +22,7 @@ export function classifyNonWatchlist(p: any, r: ReturnType<typeof routeChain>) {
       assets: 'USDC.e/USDC', min_viable_usd: 150, lockup_days: 30, tx_count: 5,
       bridge_exit_usd: r.defBridge, slippage_bps: 30, yield_bearing_collateral: false,
       non_farm_flag: 'GEO-BLOCK / NO AMM LP', kyc_or_geo: 'Geo-blocked jurisdictions',
-      exit_mechanics: 'Sell CLOB shares or redeem $1.', key_risks: 'Oracle/geo risk.', unknowns: 'Token odds.',
+      exit_mechanics: 'Sell CLOB shares or redeem $1.', key_risks: 'Oracle/geo risk.', unknowns: 'Unconfirmed token plans.',
       steps: mk([
         ['CHECK', `Verify jurisdiction & UMA rules on ${ch}`, 'Read-only', 15, 'Clear'],
         ['FUND', `Bridge USDC.e & gas onto ${ch}`, 'USDC.e', 15, 'Settled'],
@@ -37,7 +37,7 @@ export function classifyNonWatchlist(p: any, r: ReturnType<typeof routeChain>) {
       assets: 'USDC', min_viable_usd: eth ? 1000 : 250, lockup_days: 45, tx_count: 4,
       bridge_exit_usd: r.defBridge, slippage_bps: 5, yield_bearing_collateral: false,
       non_farm_flag: 'CREDIT DEFAULT RISK', kyc_or_geo: 'Credit screening',
-      exit_mechanics: 'Withdraw idle USDC or queue.', key_risks: 'Default/lockup.', unknowns: 'Drop odds.',
+      exit_mechanics: 'Withdraw idle USDC or queue.', key_risks: 'Default/lockup.', unknowns: 'Unconfirmed distribution terms.',
       steps: mk([
         ['AUDIT', `Check borrower defaults & liquidity on ${ch}`, 'Read-only', 20, 'Verified'],
         ['SUPPLY', `Deposit USDC into ${p.name}`, 'USDC', 15, 'Receipt'],

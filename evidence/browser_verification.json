@@ -1,37 +1,37 @@
 {
   "checks": [
     {
-      "name": "01_V4_Light_Radar_29pxKPI_14pxTable_1440x900",
+      "name": "01_V4_1_Light_Radar_Nav_Sans_Typography",
       "pass": true,
-      "detail": "{\"bg\":\"rgb(248, 250, 252)\",\"isLight\":true,\"h1\":25,\"kv\":29,\"td\":14,\"rowH\":51,\"footBottom\":824,\"hasProof\":true,\"scrollH\":900}"
+      "detail": "{\"bg\":\"rgb(248, 250, 252)\",\"isLight\":true,\"sansOnly\":true,\"noAv\":true,\"noFakeQuantiles\":true,\"h1\":24,\"kv\":28,\"td\":14,\"footBottom\":790,\"hasProof\":true}"
     },
     {
-      "name": "02_V4_Firelight_Research_And_Organic_Yield",
+      "name": "02_V4_1_Research_Redesign_And_Organic_Yield",
       "pass": true,
-      "detail": "maxB=830, org4=true"
+      "detail": "{\"ok\":true,\"maxB\":678,\"scatterH\":177,\"detCollapsed\":true,\"noFakeQuantiles\":true,\"detOpenOk\":true,\"fireOrg4\":true}"
     },
     {
-      "name": "03_V4_Farming_Decisions_Light",
+      "name": "03_V4_1_Farming_Funnel_And_Dynamic_ZeroReward",
       "pass": true,
-      "detail": "{\"rows\":8,\"footBottom\":771,\"ok\":true}"
+      "detail": "{\"rows\":7,\"footBottom\":718,\"ok\":true,\"farmOrg8\":true}"
     },
     {
-      "name": "04_V4_Restrained_Dark_Theme_Toggle",
+      "name": "04_V4_1_Restrained_Dark_Theme",
       "pass": true,
       "detail": "{\"attr\":\"dark\",\"bg\":\"rgb(11, 13, 16)\"}"
     },
     {
-      "name": "05_V4_Workspaces_Modal_Search_Pagination_Reset",
+      "name": "05_V4_1_Nav_Modal_Keyboard_Popover_Reset",
       "pass": true,
       "detail": "live=true, excl=true, model=true, cmp=true, modal=true, p10=true, chain=true, fltPersist=true, escNoSteal=true, reset0=true"
     },
     {
-      "name": "06_V4_Responsive_5_Viewports",
+      "name": "06_V4_1_Responsive_5_Viewports",
       "pass": true,
       "detail": "[{\"width\":1920,\"height\":1080,\"noHorizOverflow\":true},{\"width\":1440,\"height\":900,\"noHorizOverflow\":true},{\"width\":1024,\"height\":768,\"noHorizOverflow\":true},{\"width\":768,\"height\":1024,\"noHorizOverflow\":true},{\"width\":390,\"height\":844,\"noHorizOverflow\":true}]"
     },
     {
-      "name": "07_V4_Zero_Console_Errors",
+      "name": "07_V4_1_Zero_Console_Errors",
       "pass": true,
       "detail": "errors=0"
     }

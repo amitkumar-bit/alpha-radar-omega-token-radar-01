@@ -4,10 +4,10 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const URL_PATH = `file:///${ROOT.replace(/\\/g, '/')}/v4_candidate/evidence/win_out_1/dashboard/index.html`;
-const SHOTS_DIR = path.join(ROOT, 'v4_candidate/screenshots');
-const EV_DIR = path.join(ROOT, 'v4_candidate/evidence');
-const PORT = 9284;
+const URL_PATH = `file:///${ROOT.replace(/\\/g, '/')}/v4_1_candidate/evidence/win_out_1/dashboard/index.html`;
+const SHOTS_DIR = path.join(ROOT, 'v4_1_candidate/screenshots');
+const EV_DIR = path.join(ROOT, 'v4_1_candidate/evidence');
+const PORT = 9286;
 
 fs.mkdirSync(SHOTS_DIR, { recursive: true });
 const chrome = spawn(CHROME, [
@@ -59,54 +59,67 @@ try {
   await cdp.send('Page.navigate', { url: URL_PATH });
   await new Promise((r) => setTimeout(r, 700));
 
-  // 1. Light Default + Token Launch Radar + KPI >= 28px + Table 14px + Footer <= 900
+  // 1. Light Default + Sans-Serif + Nav Discoverability + Symmetric Bands
   const radarCheck = await cdp.eval(`(() => {
     const bg = getComputedStyle(document.body).backgroundColor;
+    const ff = getComputedStyle(document.body).fontFamily.toLowerCase();
     const h1 = parseFloat(getComputedStyle(document.querySelector('h1.h1')).fontSize);
     const kv = parseFloat(getComputedStyle(document.querySelector('.kv')).fontSize);
     const td = parseFloat(getComputedStyle(document.querySelector('.tbl td')).fontSize);
-    const rowH = document.querySelector('tbody tr.rc td')?.getBoundingClientRect().height || 0;
     const footBottom = document.querySelector('.tf')?.getBoundingClientRect().bottom || 9999;
+    const navTxt = document.getElementById('nav').innerText;
     const txt = document.body.innerText;
-    const hasProof = txt.includes('Token Launch Radar') && txt.includes('40/40') && txt.includes('Parity 184/184') && txt.includes('61.9%') && txt.includes('Cond. Est. MCap') && !txt.includes('+EV') && !/\\bVIABLE\\b/.test(txt);
-    return { bg, isLight: bg === 'rgb(248, 250, 252)', h1, kv, td, rowH, footBottom: Math.round(footBottom), hasProof, scrollH: document.documentElement.scrollHeight };
+    const noAv = document.querySelectorAll('.av').length === 0;
+    const noFakeQuantiles = !/\\bP(?:10|25|75|90)\\b/.test(txt);
+    const hasProof = txt.includes('Token Launch Radar') && txt.includes('40/40') && txt.includes('Parity 184/184') && txt.includes('61.9%') && /cond\. est\. mcap/i.test(txt) && /±q50 band/i.test(txt) && navTxt.includes('Recorded (416)') && navTxt.includes('Excluded (158)');
+    return { bg, isLight: bg === 'rgb(248, 250, 252)', sansOnly: !ff.includes('mono'), noAv, noFakeQuantiles, h1, kv, td, footBottom: Math.round(footBottom), hasProof };
   })()`);
-  ok('01_V4_Light_Radar_29pxKPI_14pxTable_1440x900',
-    radarCheck.isLight && radarCheck.hasProof && radarCheck.kv >= 28 && radarCheck.td >= 14 && radarCheck.footBottom <= 901,
+  ok('01_V4_1_Light_Radar_Nav_Sans_Typography',
+    radarCheck.isLight && radarCheck.sansOnly && radarCheck.noAv && radarCheck.noFakeQuantiles && radarCheck.hasProof && radarCheck.kv >= 28 && radarCheck.td >= 14 && radarCheck.footBottom <= 901,
     JSON.stringify(radarCheck));
   await cdp.shot(path.join(SHOTS_DIR, '1-board.png'));
 
-  // 2. Research View (#89 Firelight @ $5,000, 7% drop) + Hypothetical Organic Base Yield toggle
+  // 2. Research View Redesign (#89 Firelight @ $5,000, 7% drop): Hero + Tall Scatter + Asymmetric Layout + Details Collapsed + Symmetric Bands + Dynamic Org Yield
   await cdp.eval(`window.TITAN_SET({ view: 'research', slug: 'firelight', budget: 5000, dropShare: 0.07, orgApr: 0 })`);
   await new Promise((r) => setTimeout(r, 250));
   const fire0 = await cdp.eval(`(() => {
-    const txt = document.getElementById('app').innerText;
-    const maxB = Math.max(...[...document.querySelectorAll('#app > *')].map(el => el.getBoundingClientRect().bottom));
+    const app = document.getElementById('app');
+    const txt = app.innerText;
+    const maxB = Math.max(...[...app.querySelectorAll(':scope > *')].map(el => el.getBoundingClientRect().bottom));
+    const scatterSvg = app.querySelectorAll('svg.chart')[1];
+    const scatterH = scatterSvg ? Math.round(scatterSvg.getBoundingClientRect().height) : 0;
+    const det = app.querySelector('details.det');
+    const noFakeQuantiles = !/\\bP(?:10|25|75|90)\\b/.test(txt);
     return {
-      ok: txt.includes('Firelight') && txt.includes('UNDERWRITING SLASH RISK') && txt.includes('1. Base Value (Huber + EB)') && /conditional est\. mcap/i.test(txt) && txt.includes('$172.14') && txt.includes('$139.10') && txt.includes('-$33.04') && txt.includes('61.9%'),
-      maxB: Math.round(maxB),
+      ok: txt.includes('Firelight') && txt.includes('UNDERWRITING SLASH RISK') && txt.includes('Conditional Est. MCap (Spot)') && txt.includes('-q80') && txt.includes('+q80') && txt.includes('$21.24') && txt.includes('-$33.04') && txt.includes('61.9%') && txt.includes('Exact ✓'),
+      maxB: Math.round(maxB), scatterH, detCollapsed: det && !det.open, noFakeQuantiles,
     };
   })()`);
   await cdp.shot(path.join(SHOTS_DIR, '2-detail.png'));
 
+  await cdp.eval(`(() => { document.querySelector('details.det summary')?.click(); })()`);
+  const detOpenOk = await cdp.eval(`(() => { const t = document.getElementById('app').innerText; return document.querySelector('details.det')?.open && t.includes('1. Base Value (Huber + EB)') && t.includes('Spot MCap ≠ FDV'); })()`);
   await cdp.eval(`(() => { const s = document.getElementById('orgSel'); s.value='0.04'; s.dispatchEvent(new Event('change',{bubbles:true})); })()`);
   const fireOrg4 = await cdp.eval(`(() => { const t = document.getElementById('app').innerText; return t.includes('$37.68') && t.includes('-$16.60'); })()`);
-  ok('02_V4_Firelight_Research_And_Organic_Yield', fire0.ok && fire0.maxB <= 905 && fireOrg4, `maxB=${fire0.maxB}, org4=${fireOrg4}`);
+  ok('02_V4_1_Research_Redesign_And_Organic_Yield', fire0.ok && fire0.maxB <= 901 && fire0.scatterH >= 120 && fire0.detCollapsed && fire0.noFakeQuantiles && detOpenOk && fireOrg4, JSON.stringify({ ...fire0, detOpenOk, fireOrg4 }));
 
-  // 3. Farming Decisions Workspace @ $1,000, 7%, 0% base yield
+  // 3. Farming Decisions Workspace @ $1,000, 7%, 0% base yield -> Decision Funnel + Dynamic Zero-Reward KPI
   await cdp.eval(`window.TITAN_SET({ view: 'farming', farmFilter: 'central', budget: 1000, dropShare: 0.07, orgApr: 0, sortBy: 'netHr', sortDir: -1 })`);
   await new Promise((r) => setTimeout(r, 250));
   const farm0 = await cdp.eval(`(() => {
     const txt = document.getElementById('app').innerText;
     const rows = document.querySelectorAll('tbody tr.rc').length;
     const footBottom = document.querySelector('.tf')?.getBoundingClientRect().bottom || 9999;
-    return { rows, footBottom: Math.round(footBottom), ok: txt.includes('0/184') && txt.includes('Excludes organic base yield') && txt.includes('+8 gated') };
+    return { rows, footBottom: Math.round(footBottom), ok: txt.includes('0/184') && txt.includes('Excludes organic base yield') && txt.includes('Gate Funnel (184)') && txt.includes('+8 gated') && !/\\bP(?:10|25|75|90)\\b/.test(txt) };
   })()`);
   await cdp.shot(path.join(SHOTS_DIR, '3-filtered.png'));
-  ok('03_V4_Farming_Decisions_Light', farm0.ok && farm0.rows >= 8 && farm0.footBottom <= 905, JSON.stringify(farm0));
 
-  // 4. Restrained Dark Alternative Theme verification & screenshots
-  await cdp.eval(`window.TITAN_SET({ theme: 'dark', view: 'radar', page: 1 })`);
+  await cdp.eval(`(() => { const s = document.getElementById('orgSel'); s.value='0.08'; s.dispatchEvent(new Event('change',{bubbles:true})); })()`);
+  const farmOrg8 = await cdp.eval(`(() => { const t = document.getElementById('app').innerText; return !t.includes('Zero-Reward (8% Base)\\n0/184') && t.includes('Zero-Reward (8% Base)') && !t.includes('Excludes organic base yield'); })()`);
+  ok('03_V4_1_Farming_Funnel_And_Dynamic_ZeroReward', farm0.ok && farm0.rows >= 7 && farm0.footBottom <= 901 && farmOrg8, JSON.stringify({ ...farm0, farmOrg8 }));
+
+  // 4. Restrained Dark Alternative Theme
+  await cdp.eval(`window.TITAN_SET({ theme: 'dark', view: 'radar', page: 1, orgApr: 0 })`);
   await new Promise((r) => setTimeout(r, 200));
   const darkRadar = await cdp.eval(`({ attr: document.documentElement.dataset.theme, bg: getComputedStyle(document.body).backgroundColor })`);
   await cdp.shot(path.join(EV_DIR, 'dark_1-board.png'));
@@ -114,23 +127,23 @@ try {
   await new Promise((r) => setTimeout(r, 200));
   await cdp.shot(path.join(EV_DIR, 'dark_2-detail.png'));
   await cdp.eval(`window.TITAN_SET({ theme: 'light' })`);
-  ok('04_V4_Restrained_Dark_Theme_Toggle', darkRadar.attr === 'dark' && darkRadar.bg === 'rgb(11, 13, 16)', JSON.stringify(darkRadar));
+  ok('04_V4_1_Restrained_Dark_Theme', darkRadar.attr === 'dark' && darkRadar.bg === 'rgb(11, 13, 16)', JSON.stringify(darkRadar));
 
-  // 5. Markets (Live + Excl), Model, Compare, Modal, Search, Filters Popover, Reset
-  await cdp.eval(`window.TITAN_SET({ view: 'live' })`);
-  const liveOk = await cdp.eval(`document.getElementById('app').innerText.includes('416') && document.getElementById('app').innerText.includes('128') && document.getElementById('app').innerText.includes('288')`);
-  await cdp.eval(`window.TITAN_SET({ view: 'excluded' })`);
-  const exclOk = await cdp.eval(`document.getElementById('app').innerText.includes('Tokenized Siblings (6)')`);
-  await cdp.eval(`window.TITAN_SET({ view: 'model' })`);
-  const modOk = await cdp.eval(`(() => { const t = document.getElementById('app').innerText; return t.includes('A. Official Starter') && t.includes('61.9%') && t.includes('0.22') && t.includes('Student-t3') && !!document.querySelector('svg.chart circle.pt-dot'); })()`);
-  await cdp.eval(`window.TITAN_SET({ view: 'compare' })`);
+  // 5. Explicit Recorded / Excluded Nav + Model + Compare + Modal Focus + Filter Popover Persistence + Escape
+  await cdp.eval(`document.querySelector('[data-view="live"]')?.click()`);
+  const liveOk = await cdp.eval(`document.getElementById('app').innerText.includes('Recorded-Token Protocols (416)') && document.getElementById('app').innerText.includes('128') && document.getElementById('app').innerText.includes('288')`);
+  await cdp.eval(`document.querySelector('[data-view="excluded"]')?.click()`);
+  const exclOk = await cdp.eval(`document.getElementById('app').innerText.includes('Excluded & Sibling Protocols (158)') && document.getElementById('app').innerText.includes('Tokenized Siblings (6)')`);
+  await cdp.eval(`document.querySelector('[data-view="model"]')?.click()`);
+  const modOk = await cdp.eval(`(() => { const t = document.getElementById('app').innerText; return t.includes('A. Official Starter') && t.includes('61.9%') && t.includes('0.22') && t.includes('Student-t3') && !/\\bP(?:10|25|75|90)\\b/.test(t); })()`);
+  await cdp.eval(`document.querySelector('[data-view="compare"]')?.click()`);
   await cdp.eval(`document.querySelector('[data-loadcmp="1"]')?.click()`);
-  const cmpOk = await cdp.eval(`document.getElementById('app').innerText.includes('Side-by-Side Comparison')`);
+  const cmpOk = await cdp.eval(`document.getElementById('app').innerText.includes('Side-by-Side Comparison') && !document.getElementById('app').innerText.includes('P25')`);
   await cdp.eval(`document.querySelector('[data-clearcmp="1"]')?.click()`);
   await cdp.eval(`document.getElementById('btn-meth').click()`);
-  const methOpen = await cdp.eval(`!document.getElementById('modal').hidden`);
+  const methOpen = await cdp.eval(`!document.getElementById('modal').hidden && document.getElementById('modal').getAttribute('aria-labelledby') === 'mdl-h'`);
   await cdp.eval(`document.getElementById('mdl-close').click()`);
-  const methClosed = await cdp.eval(`document.getElementById('modal').hidden`);
+  const methClosed = await cdp.eval(`document.getElementById('modal').hidden && document.activeElement?.id === 'btn-meth'`);
   await cdp.eval(`window.TITAN_SET({ view: 'radar', page: 10 })`);
   const page10Ok = await cdp.eval(`window.TITAN_STATE.page === 10 && document.body.innerText.includes('Showing 55–60') && !!document.querySelector('[data-page="11"]')`);
   await cdp.eval(`(() => { const g = document.getElementById('gsearch'); g.value='Solana'; g.dispatchEvent(new Event('input')); })()`);
@@ -143,8 +156,8 @@ try {
   const escNoSteal = await cdp.eval(`document.getElementById('flt-pop').hidden && document.activeElement?.id !== 'btn-meth'`);
   await cdp.eval(`document.getElementById('btn-flt')?.click()`);
   await cdp.eval(`document.querySelector('[data-reset="1"]')?.click()`);
-  const reset0Ok = await cdp.eval(`window.TITAN_STATE.dropShare === 0.07 && document.querySelectorAll('tbody tr.rc').length >= 8`);
-  ok('05_V4_Workspaces_Modal_Search_Pagination_Reset', liveOk && exclOk && modOk && cmpOk && methOpen && methClosed && page10Ok && chainOk && fltPersist && escNoSteal && reset0Ok, `live=${liveOk}, excl=${exclOk}, model=${modOk}, cmp=${cmpOk}, modal=${methOpen && methClosed}, p10=${page10Ok}, chain=${chainOk}, fltPersist=${fltPersist}, escNoSteal=${escNoSteal}, reset0=${reset0Ok}`);
+  const reset0Ok = await cdp.eval(`window.TITAN_STATE.dropShare === 0.07 && document.querySelectorAll('tbody tr.rc').length >= 7`);
+  ok('05_V4_1_Nav_Modal_Keyboard_Popover_Reset', liveOk && exclOk && modOk && cmpOk && methOpen && methClosed && page10Ok && chainOk && fltPersist && escNoSteal && reset0Ok, `live=${liveOk}, excl=${exclOk}, model=${modOk}, cmp=${cmpOk}, modal=${methOpen && methClosed}, p10=${page10Ok}, chain=${chainOk}, fltPersist=${fltPersist}, escNoSteal=${escNoSteal}, reset0=${reset0Ok}`);
 
   // 6. Responsive 5 Viewports
   await cdp.eval(`window.TITAN_SET({ view: 'radar', page: 1 })`);
@@ -155,8 +168,8 @@ try {
     const ov = await cdp.eval(`document.documentElement.scrollWidth <= window.innerWidth + 1`);
     viewports.push({ width: w, height: h, noHorizOverflow: ov });
   }
-  ok('06_V4_Responsive_5_Viewports', viewports.every((v) => v.noHorizOverflow), JSON.stringify(viewports));
-  ok('07_V4_Zero_Console_Errors', cdp.errors.length === 0, `errors=${cdp.errors.length}`);
+  ok('06_V4_1_Responsive_5_Viewports', viewports.every((v) => v.noHorizOverflow), JSON.stringify(viewports));
+  ok('07_V4_1_Zero_Console_Errors', cdp.errors.length === 0, `errors=${cdp.errors.length}`);
 
   cdp.close();
   fs.writeFileSync(path.join(EV_DIR, 'browser_verification.json'), JSON.stringify({ checks, errors: cdp.errors }, null, 2));

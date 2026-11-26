@@ -1,71 +1,94 @@
 {
-  "buildDossier_text_bytes": 64521,
+  "buildDossier_text_bytes": 64919,
   "buildDossier_cap_bytes": 65536,
-  "buildDossier_headroom_bytes": 1015,
+  "buildDossier_headroom_bytes": 617,
   "buildDossier_cut": false,
   "dossier_view_1440x900_budget_json_bytes": 28356,
-  "dossier_text_json_bytes": 64907,
-  "form_guess": "bodies/decls (lexicographical fill)",
-  "lexicographical_visibility": [
+  "whole_text_json_bytes": 65345,
+  "emitted_prefix_utf8_bytes": 28084,
+  "emitted_prefix_json_bytes": 28356,
+  "per_file_actual_visibility": [
     {
-      "file": "analysis.js",
-      "status": "WHOLE_VISIBLE",
-      "bytes": 14580,
-      "visible_functions": [
-        "ageOf",
-        "huber",
-        "fitModel",
-        "decomposeLog",
-        "peerKy",
-        "peerStats",
-        "datedSplit",
-        "computeOosLadder",
-        "computePeerIncidence",
-        "calcEconomics",
-        "exclReason",
-        "buildFullBoard",
-        "computeStrictAudit"
-      ]
+      "file": "dashboard/analysis.js",
+      "raw_bytes": 14646,
+      "emitted_bytes": 14646,
+      "status": "WHOLE_VISIBLE"
     },
     {
-      "file": "app.js",
-      "status": "PARTIAL (~34%, 19/58 lines)",
-      "bytes": 38637,
-      "visible_functions": [],
-      "omitted_functions": [
-        "cR",
-        "gF",
-        "sSVG",
-        "rSVG",
-        "rBar",
-        "pgs",
-        "cBar",
-        "pT",
-        "pagedView",
-        "rRad",
-        "rRes",
-        "rMkt",
-        "rFrm",
-        "rMod",
-        "rCmp",
-        "expD",
-        "go",
-        "rNav",
-        "render",
-        "fGs"
-      ]
+      "file": "dashboard/app.js",
+      "raw_bytes": 39164,
+      "emitted_bytes": 13286,
+      "status": "PARTIAL_PREFIX"
     },
     {
-      "file": "index.html",
-      "status": "DECLS_OR_OMITTED_IN_WHOLE_PASS",
-      "bytes": 1326,
-      "visible_functions": []
+      "file": "dashboard/index.html",
+      "raw_bytes": 1376,
+      "emitted_bytes": 0,
+      "status": "OMITTED_BEYOND_28356_JSON_BYTES"
     },
     {
-      "file": "styles.css",
-      "status": "DECLS_OR_OMITTED_IN_WHOLE_PASS",
-      "bytes": 9632,
-      "visible_functions": []
+      "file": "dashboard/styles.css",
+      "raw_bytes": 9581,
+      "emitted_bytes": 0,
+      "status": "OMITTED_BEYOND_28356_JSON_BYTES"
     }
-  ]
+  ],
+  "target_function_visibility": [
+    {
+      "name": "fitModel",
+      "status": "COMPLETE_BODY",
+      "emitted_chars": 1137
+    },
+    {
+      "name": "decomposeLog",
+      "status": "COMPLETE_BODY",
+      "emitted_chars": 1162
+    },
+    {
+      "name": "buildFullBoard",
+      "status": "COMPLETE_BODY",
+      "emitted_chars": 3791
+    },
+    {
+      "name": "computeOosLadder",
+      "status": "COMPLETE_BODY",
+      "emitted_chars": 1350
+    },
+    {
+      "name": "calcEconomics",
+      "status": "COMPLETE_BODY",
+      "emitted_chars": 1676
+    },
+    {
+      "name": "computeStrictAudit",
+      "status": "COMPLETE_BODY",
+      "emitted_chars": 839
+    },
+    {
+      "name": "verifyBoardUiParity",
+      "status": "COMPLETE_BODY",
+      "emitted_chars": 556
+    },
+    {
+      "name": "auditFarmingPlaybook",
+      "status": "COMPLETE_BODY",
+      "emitted_chars": 580
+    },
+    {
+      "name": "rRad",
+      "status": "OMITTED",
+      "emitted_chars": 0
+    },
+    {
+      "name": "rRes",
+      "status": "OMITTED",
+      "emitted_chars": 0
+    },
+    {
+      "name": "rFrm",
+      "status": "OMITTED",
+      "emitted_chars": 0
+    }
+  ],
+  "emitted_tail_preview": "ar',topBar=''){if(!list.length)return dv('tc',`${topBar}<div class=em><div class=h2>No matches</div><div>${S.dropShare===0?`0 rows @ 0% drop & ${X(S.orgApr*100,0)}% base.`:'Reset f"
 }

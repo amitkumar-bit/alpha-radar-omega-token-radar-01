@@ -4,7 +4,7 @@ import fs from 'node:fs';
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const PORT = 9285;
 const ROOT = process.cwd().replace(/\\/g, '/');
-const d = JSON.parse(fs.readFileSync('v4_candidate/evidence/win_out_1/dossier.json', 'utf8'));
+const d = JSON.parse(fs.readFileSync('v4_1_candidate/evidence/win_out_1/dossier.json', 'utf8'));
 const covIdx = Number.isInteger(d.cover) ? d.cover : 0;
 const rest = d.images.filter((_, i) => i !== covIdx);
 
@@ -21,11 +21,11 @@ window.renderSheet = async (imgs, w, h) => {
   return c.toDataURL('image/jpeg', 0.88).split(',')[1];
 };
 </script></body></html>`;
-fs.writeFileSync('v4_candidate/evidence/jv_sheet.html', html);
+fs.writeFileSync('v4_1_candidate/evidence/jv_sheet.html', html);
 
 const chrome = spawn(CHROME, [
   '--headless=new', '--disable-gpu', '--no-sandbox',
-  `--remote-debugging-port=${PORT}`, `--user-data-dir=${ROOT}/v4_candidate/evidence/jv_tmp`, 'about:blank',
+  `--remote-debugging-port=${PORT}`, `--user-data-dir=${ROOT}/v4_1_candidate/evidence/jv_tmp`, 'about:blank',
 ], { stdio: 'ignore' });
 
 async function getWs() {
@@ -43,16 +43,16 @@ try {
   await new Promise((r) => { ws.onopen = r; });
   const send = (m, p = {}) => new Promise((r) => { pk.set(++id, r); ws.send(JSON.stringify({ id, method: m, params: p })); });
   await send('Page.enable'); await send('Runtime.enable');
-  await send('Page.navigate', { url: `file:///${ROOT}/v4_candidate/evidence/jv_sheet.html` });
+  await send('Page.navigate', { url: `file:///${ROOT}/v4_1_candidate/evidence/jv_sheet.html` });
   await new Promise((r) => setTimeout(r, 300));
   const ev = async (expr) => (await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true })).result?.value;
   const covB64 = await ev(`window.renderSheet(${JSON.stringify([d.images[covIdx]])}, 1440, 900)`);
   const shB64 = await ev(`window.renderSheet(${JSON.stringify(rest)}, 1024, 319)`);
-  fs.writeFileSync('v4_candidate/evidence/v4_judge_view_cover.jpg', Buffer.from(covB64, 'base64'));
-  fs.writeFileSync('v4_candidate/evidence/v4_judge_view_sheet.jpg', Buffer.from(shB64, 'base64'));
-  console.log('cover:', fs.statSync('v4_candidate/evidence/v4_judge_view_cover.jpg').size, 'sheet:', fs.statSync('v4_candidate/evidence/v4_judge_view_sheet.jpg').size);
+  fs.writeFileSync('v4_1_candidate/evidence/v4_1_judge_view_cover.jpg', Buffer.from(covB64, 'base64'));
+  fs.writeFileSync('v4_1_candidate/evidence/v4_1_judge_view_sheet.jpg', Buffer.from(shB64, 'base64'));
+  console.log('cover:', fs.statSync('v4_1_candidate/evidence/v4_1_judge_view_cover.jpg').size, 'sheet:', fs.statSync('v4_1_candidate/evidence/v4_1_judge_view_sheet.jpg').size);
   ws.close();
 } finally {
   chrome.kill();
-  fs.rmSync('v4_candidate/evidence/jv_sheet.html', { force: true });
+  fs.rmSync('v4_1_candidate/evidence/jv_sheet.html', { force: true });
 }

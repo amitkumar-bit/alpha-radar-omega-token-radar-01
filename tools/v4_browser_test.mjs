@@ -137,9 +137,14 @@ try {
   const chainOk = await cdp.eval(`document.querySelectorAll('#gdrop .gi').length >= 5`);
   await cdp.eval(`window.TITAN_SET({ view: 'farming', dropShare: 0 })`);
   await cdp.eval(`document.getElementById('btn-flt')?.click()`);
+  await cdp.eval(`(() => { const q = document.getElementById('qInput'); q.value='Fire'; q.dispatchEvent(new Event('input')); })()`);
+  const fltPersist = await cdp.eval(`!document.getElementById('flt-pop').hidden && document.activeElement?.id === 'qInput'`);
+  await cdp.eval(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
+  const escNoSteal = await cdp.eval(`document.getElementById('flt-pop').hidden && document.activeElement?.id !== 'btn-meth'`);
+  await cdp.eval(`document.getElementById('btn-flt')?.click()`);
   await cdp.eval(`document.querySelector('[data-reset="1"]')?.click()`);
   const reset0Ok = await cdp.eval(`window.TITAN_STATE.dropShare === 0.07 && document.querySelectorAll('tbody tr.rc').length >= 8`);
-  ok('05_V4_Workspaces_Modal_Search_Pagination_Reset', liveOk && exclOk && modOk && cmpOk && methOpen && methClosed && page10Ok && chainOk && reset0Ok, `live=${liveOk}, excl=${exclOk}, model=${modOk}, cmp=${cmpOk}, modal=${methOpen && methClosed}, p10=${page10Ok}, chain=${chainOk}, reset0=${reset0Ok}`);
+  ok('05_V4_Workspaces_Modal_Search_Pagination_Reset', liveOk && exclOk && modOk && cmpOk && methOpen && methClosed && page10Ok && chainOk && fltPersist && escNoSteal && reset0Ok, `live=${liveOk}, excl=${exclOk}, model=${modOk}, cmp=${cmpOk}, modal=${methOpen && methClosed}, p10=${page10Ok}, chain=${chainOk}, fltPersist=${fltPersist}, escNoSteal=${escNoSteal}, reset0=${reset0Ok}`);
 
   // 6. Responsive 5 Viewports
   await cdp.eval(`window.TITAN_SET({ view: 'radar', page: 1 })`);

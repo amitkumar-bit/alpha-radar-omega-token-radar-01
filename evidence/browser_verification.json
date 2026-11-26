@@ -23,7 +23,7 @@
     {
       "name": "05_V4_Workspaces_Modal_Search_Pagination_Reset",
       "pass": true,
-      "detail": "live=true, excl=true, model=true, cmp=true, modal=true, p10=true, chain=true, reset0=true"
+      "detail": "live=true, excl=true, model=true, cmp=true, modal=true, p10=true, chain=true, fltPersist=true, escNoSteal=true, reset0=true"
     },
     {
       "name": "06_V4_Responsive_5_Viewports",

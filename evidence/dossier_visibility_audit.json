@@ -1,10 +1,10 @@
 {
-  "buildDossier_text_bytes": 64240,
+  "buildDossier_text_bytes": 64521,
   "buildDossier_cap_bytes": 65536,
-  "buildDossier_headroom_bytes": 1296,
+  "buildDossier_headroom_bytes": 1015,
   "buildDossier_cut": false,
   "dossier_view_1440x900_budget_json_bytes": 28356,
-  "dossier_text_json_bytes": 64624,
+  "dossier_text_json_bytes": 64907,
   "form_guess": "bodies/decls (lexicographical fill)",
   "lexicographical_visibility": [
     {
@@ -29,8 +29,8 @@
     },
     {
       "file": "app.js",
-      "status": "PARTIAL (~35%, 20/58 lines)",
-      "bytes": 38387,
+      "status": "PARTIAL (~34%, 19/58 lines)",
+      "bytes": 38637,
       "visible_functions": [],
       "omitted_functions": [
         "cR",
@@ -64,7 +64,7 @@
     {
       "file": "styles.css",
       "status": "DECLS_OR_OMITTED_IN_WHOLE_PASS",
-      "bytes": 9601,
+      "bytes": 9632,
       "visible_functions": []
     }
   ]

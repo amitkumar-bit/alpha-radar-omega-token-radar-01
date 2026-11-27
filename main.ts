@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-board.ts';
 import { WATCHLIST_SPECS } from './lib/watchlist_specs.ts';
 import { buildAllSpecs } from './lib/farm_specs.ts';
+import { computeOosLadder } from './lib/oos_eval.ts';
 import OMEGA from './dashboard/analysis.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
@@ -78,13 +79,20 @@ const boardJson = `${JSON.stringify({ rows: boardModel.rows })}\n`;
 writeFileSync(join(out, 'board.json'), boardJson);
 const boardSha256 = createHash('sha256').update(boardJson).digest('hex');
 
+const candSpecs: Record<string, any> = {};
+for (const r of boardModel.rows) {
+  if (allSpecs[r.slug]) candSpecs[r.slug] = { precomputed_farm: allSpecs[r.slug].precomputed_farm };
+}
+const ms = Date.parse(`${snapshot.as_of}T00:00:00Z`);
+const oosBench = computeOosLadder(OMEGA, boardModel.comps, ms);
 const dataBundle = {
   as_of: snapshot.as_of,
   source: snapshot.source,
   floor_usd: snapshot.floor_usd,
   watchlist: snapshot.watchlist,
   protocols: snapshot.protocols,
-  wl_specs: allSpecs,
+  wl_specs: candSpecs,
+  oos: oosBench,
   board_sha256: boardSha256,
   snapshot_sha256: snapSha256,
   precomputed_rows_digest: boardModel.rows.map((r: any) => ({

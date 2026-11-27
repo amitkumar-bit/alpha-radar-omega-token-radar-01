@@ -98,10 +98,10 @@ export const WATCHLIST_SPECS: Record<string, WatchlistProtocolSpec> = {
     bridge_exit_usd: 3.0,
     slippage_bps: 50,
     yield_bearing_collateral: true,
-    non_farm_flag: 'LIVE ECOSYSTEM TOKEN ($TAO)',
+    non_farm_flag: 'LIVE ECOSYSTEM TOKEN (TAO)',
     kyc_or_geo: 'None',
     exit_mechanics: 'Unstake subnet Alpha back into TAO through subnet AMM pool; exposed to Alpha/TAO price slippage.',
-    key_risks: 'Ecosystem already operates with live $TAO token; severe subnet Alpha token volatility, emission dilution, and AMM slippage.',
+    key_risks: 'Ecosystem already operates with live TAO token; severe subnet Alpha token volatility, emission dilution, and AMM slippage.',
     unknowns: 'Whether individual subnets will ever issue external tokens beyond existing Alpha emissions.',
     steps: [
       { label: 'RESEARCH', action: 'Audit subnet emission weight, validator APY, and Alpha pool depth on Bittensor explorer', asset: 'TAO', time_min: 15, verify: 'Subnet liquidity sufficient to absorb entry/exit <1% slippage' },
